@@ -5,7 +5,6 @@ import src.utils.Position;
 
 public class ArrayExprNode extends ExprNode {
     public ExprNode arrayName, index;
-    public int dimension;
 
     public ArrayExprNode(ExprNode arrayName, ExprNode index, Position pos) {
         super(null, true, pos);

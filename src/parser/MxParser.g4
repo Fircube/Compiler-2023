@@ -40,7 +40,8 @@ statement
 expression
     : primary                                               #atomExpr
     | expression '[' expression ']'                         #arrayExpr
-    | expression op=Dot expression                          #memberExpr
+    | expression op=Dot Identifier ('(' realParameter? ')')?
+                                                            #memberExpr
     | expression '(' realParameter? ')'                     #funcCallExpr
     | expression postfix=(Increase | Decrease)              #postExpr // Post-increment/decrement operators
     | prefix=(Increase | Decrease) expression               #preExpr

@@ -16,7 +16,8 @@ public class Type {
     public Type(String name) {
         this.typeName = name;
         this.isArray = false;
-        this.isClass = false;
+        if (name == null) this.isClass = false;
+        else this.isClass = !name.equals("int") && !name.equals("bool") && !name.equals("null");
         this.dimension = 0;
     }
 
@@ -38,6 +39,19 @@ public class Type {
     public boolean isString() {
         return typeName.equals("string") && !isArray;
     }
+
+    public boolean isVoid() {
+        return typeName.equals("void");
+    }
+
+    public boolean isNull() {
+        return typeName.equals("null");
+    }
+
+    public boolean isThis() {
+        return typeName.equals("this");
+    }
+
 
     // check if same name
     // Regardless of class and variable differences

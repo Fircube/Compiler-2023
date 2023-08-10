@@ -22,7 +22,7 @@ public class Main {
         boolean online = true;
 
         if (!online) { //local
-            input = new FileInputStream("name");
+            input=new FileInputStream("testcases/sema/misc-package/misc-3.mx");
         }
 
         try {

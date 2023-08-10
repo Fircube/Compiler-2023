@@ -39,6 +39,18 @@ public class TypeNode extends ASTNode {
         return type.isString();
     }
 
+    public boolean isVoid() {
+        return type.isVoid();
+    }
+
+    public boolean isNull() {
+        return type.isVoid();
+    }
+
+    public boolean isThis() {
+        return type.isThis();
+    }
+
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);

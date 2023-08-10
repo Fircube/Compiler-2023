@@ -57,6 +57,8 @@ public interface ASTVisitor {
 
     void visit(NewExprNode it);
 
+    void visit(ParenExprNode it);
+
     void visit(PostExprNode it);
 
     void visit(PreExprNode it);
