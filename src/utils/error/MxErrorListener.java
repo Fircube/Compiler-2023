@@ -13,6 +13,6 @@ public class MxErrorListener extends BaseErrorListener {
                             String msg,
                             RecognitionException e) {
 
-        throw new SyntaxError(new Position(line, charPositionInLine),msg);
+        throw new SyntaxError(new Position(line, charPositionInLine), msg);
     }
 }

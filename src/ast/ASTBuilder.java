@@ -60,11 +60,6 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
                 newClass.con.add(con);
             }
         }
-//        /else {
-//            BlockNode suite = new BlockNode(new Position(ctx));
-//            ClassConNode con = new ClassConNode(ctx.Identifier().getText(), suite, new Position(ctx));
-//            newClass.con.add(con);
-//        }
         for (var i : ctx.funcDef()) {
             newClass.func.add((FuncDefNode) visit(i));
         }
@@ -334,7 +329,7 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitParen(ParenContext ctx) {
         ExprNode expr = (ExprNode) visit(ctx.expression());
-        return new ParenExprNode(expr,new Position(ctx));
+        return new ParenExprNode(expr, new Position(ctx));
     }
 
     @Override

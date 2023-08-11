@@ -2,7 +2,8 @@ package src.ast.exprNode;
 
 import src.ast.ASTVisitor;
 import src.utils.Position;
-public class BinaryExprNode extends ExprNode{
+
+public class BinaryExprNode extends ExprNode {
     public ExprNode lhs, rhs;
     public String op;
 
@@ -17,5 +18,4 @@ public class BinaryExprNode extends ExprNode{
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
-
 }

@@ -2,13 +2,13 @@ package src.utils.scope;
 
 import src.utils.Type;
 
-public class FuncScope extends Scope{
+public class FuncScope extends Scope {
     public Type returnType;
-    public boolean hasReturnStmt=false;
+    public boolean hasReturnStmt = false;
 
-    public FuncScope(Type returnType,Scope parent){
+    public FuncScope(Type returnType, Scope parent) {
         super(parent);
-        this.returnType=returnType;
+        this.returnType = returnType;
     }
 
     public boolean inLoop() {
@@ -16,7 +16,7 @@ public class FuncScope extends Scope{
     }
 
     @Override
-    public Type getRetType(){
+    public Type getRetType() {
         return returnType;
     }
 }

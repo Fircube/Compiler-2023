@@ -17,12 +17,12 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 public class Main {
-    public static void main(String [] args) throws Exception{
+    public static void main(String[] args) throws Exception {
         InputStream input = System.in;
         boolean online = true;
 
         if (!online) { //local
-            input=new FileInputStream("testcases/sema/misc-package/misc-3.mx");
+            input = new FileInputStream("testcases/sema/symbol-package/symbol-2.mx");
         }
 
         try {
@@ -32,6 +32,7 @@ public class Main {
             throw new RuntimeException();
         }
     }
+
     public static void compile(InputStream input) throws Exception {
         GlobalScope globalScope = new GlobalScope();
         globalScope.initialize();
@@ -43,6 +44,7 @@ public class Main {
         MxParser parser = new MxParser(new CommonTokenStream(lexer));
         parser.removeErrorListeners();
         parser.addErrorListener(new MxErrorListener());
+
         ParseTree parseTreeRoot = parser.program();
 
         ASTBuilder astBuilder = new ASTBuilder();
@@ -50,6 +52,5 @@ public class Main {
 
         new SymbolCollector(globalScope).visit(ASTRoot);
         new SemanticChecker(globalScope).visit(ASTRoot);
-
     }
 }

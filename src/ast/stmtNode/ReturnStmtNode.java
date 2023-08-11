@@ -16,5 +16,4 @@ public class ReturnStmtNode extends StmtNode {
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
-
 }

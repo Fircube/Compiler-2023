@@ -1,58 +1,27 @@
-package src.frontend;
+package src.ir;
 
 import src.ast.ASTVisitor;
 import src.ast.exprNode.*;
 import src.ast.rootNode.*;
 import src.ast.stmtNode.*;
-import src.utils.scope.ClassScope;
-import src.utils.scope.GlobalScope;
 
-public class SymbolCollector implements ASTVisitor {
-    public GlobalScope globalScope;
-    public ClassScope classScope = null;
-
-    public SymbolCollector(GlobalScope globalScope) {
-        this.globalScope = globalScope;
-    }
+public class IRBuilder implements ASTVisitor {
+    public IRBuilder() {}
 
     @Override
     public void visit(ProgramNode it) {
-        for (var i : it.defs) {
-            if (i instanceof VarDefNode) {
-                continue;
-            }
-            i.accept(this);
-        }
     }
 
     @Override
     public void visit(ClassConNode it) {
-        classScope.con = it;
     }
 
     @Override
     public void visit(ClassDefNode it) {
-        classScope = new ClassScope(it.className, globalScope);
-        for (var i : it.members) {
-            i.accept(this);
-        }
-        for (var i : it.con) {
-            i.accept(this);
-        }
-        for (var i : it.func) {
-            i.accept(this);
-        }
-        globalScope.addClassDef(classScope, it.pos);
-        this.classScope = null;
     }
 
     @Override
     public void visit(FuncDefNode it) {
-        if (classScope != null) {
-            classScope.addFuncDef(it);
-        } else {
-            globalScope.addFuncDef(it);
-        }
     }
 
     @Override
@@ -97,20 +66,15 @@ public class SymbolCollector implements ASTVisitor {
 
     @Override
     public void visit(UnitVarDefNode it) {
-        classScope.addVarDef(it);
     }
 
     @Override
     public void visit(VarDefNode it) {
-        for (var i : it.defs) {
-            i.accept(this);
-        }
     }
 
     @Override
     public void visit(WhileStmtNode it) {
     }
-
 
     @Override
     public void visit(ArrayExprNode it) {
@@ -140,6 +104,7 @@ public class SymbolCollector implements ASTVisitor {
     public void visit(MemberExprNode it) {
     }
 
+
     @Override
     public void visit(NewExprNode it) {
     }
@@ -164,3 +129,4 @@ public class SymbolCollector implements ASTVisitor {
     public void visit(UnaryExprNode it) {
     }
 }
+

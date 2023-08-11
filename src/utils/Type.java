@@ -7,12 +7,6 @@ public class Type {
     public boolean isClass;
     public int dimension;
 
-//    /public Type() {
-//        this.isArray = false;
-//        this.isClass = false;
-//        this.dimension = 0;
-//    }
-
     public Type(String name) {
         this.typeName = name;
         this.isArray = false;

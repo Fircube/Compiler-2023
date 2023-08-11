@@ -10,7 +10,7 @@ public class FuncCallExprNode extends ExprNode {
     public ArrayList<ExprNode> realParams = new ArrayList<>();
 
     public FuncCallExprNode(ExprNode funcName, Position pos) {
-        super(null, false, pos); // ?type
+        super(null, false, pos);
         this.funcName = funcName;
     }
 

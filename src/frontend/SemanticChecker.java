@@ -387,12 +387,12 @@ public class SemanticChecker implements ASTVisitor {
     }
 
     @Override
-    public void visit(ParenExprNode it){
+    public void visit(ParenExprNode it) {
         it.expr.accept(this);
-        it.type=new Type(it.expr.type);
-        it.isLValue=it.expr.isLValue;
-        it.isFunc=it.expr.isFunc;
-        it.funcDef=it.expr.funcDef;
+        it.type = new Type(it.expr.type);
+        it.isLValue = it.expr.isLValue;
+        it.isFunc = it.expr.isFunc;
+        it.funcDef = it.expr.funcDef;
     }
 
     @Override

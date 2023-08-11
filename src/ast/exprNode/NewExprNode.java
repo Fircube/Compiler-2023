@@ -8,13 +8,13 @@ import java.util.ArrayList;
 
 public class NewExprNode extends ExprNode {
     public String typeName;
-    public ArrayList<ExprNode> sizeParams = new ArrayList<>();
     public int dimension;
+    public ArrayList<ExprNode> sizeParams = new ArrayList<>();
 
     public NewExprNode(Type type, Position pos) {
         super(type, false, pos);
-        this.typeName=type.typeName;
-        this.dimension =type.dimension;
+        this.typeName = type.typeName;
+        this.dimension = type.dimension;
     }
 
     @Override
