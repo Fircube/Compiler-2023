@@ -62,7 +62,7 @@ public class LocalJudge {
         }
         try {
             InputStream input = new FileInputStream(fileName);
-            Main.compile(input);
+            Compiler.compile(input);
         } catch (Exception er) {
             return !success;
         }

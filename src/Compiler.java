@@ -16,7 +16,7 @@ import src.utils.scope.GlobalScope;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-public class Main {
+public class Compiler {
     public static void main(String[] args) throws Exception {
         InputStream input = System.in;
         boolean online = true;
