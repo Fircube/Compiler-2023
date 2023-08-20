@@ -2,11 +2,14 @@ package src.ast.rootNode;
 
 import src.ast.ASTNode;
 import src.ast.ASTVisitor;
+import src.ir.type.BaseType;
 import src.utils.Position;
 import src.utils.Type;
 
 public class TypeNode extends ASTNode {
     public Type type;
+
+    public BaseType irType;
 
     public TypeNode(String name, Position pos) {
         super(pos);

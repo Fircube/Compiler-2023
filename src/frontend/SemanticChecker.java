@@ -45,9 +45,7 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(ClassDefNode it) {
         currentScope = globalScope.getClassScope(it.className);
-        for (var i : it.con) {
-            i.accept(this);
-        }
+        it.con.accept(this);
         for (var i : it.func) {
             i.accept(this);
         }
@@ -103,14 +101,14 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(BreakStmtNode it) {
-        if (!currentScope.inLoop()) {
+        if (!currentScope.isInLoop()) {
             throw new SemanticError(it.pos, "Break Statement cannot be out of loop");
         }
     }
 
     @Override
     public void visit(ContinueStmtNode it) {
-        if (!currentScope.inLoop()) {
+        if (!currentScope.isInLoop()) {
             throw new SemanticError(it.pos, "Continue Statement cannot be out of loop");
         }
     }
@@ -174,10 +172,10 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(UnitVarDefNode it) {
-        it.typeName.accept(this);
+        it.type.accept(this);
         if (it.expr != null) {
             it.expr.accept(this);
-            if (it.expr.type.isMismatch(it.typeName.type) && !it.expr.type.isNull()) {
+            if (it.expr.type.isMismatch(it.type.type) && !it.expr.type.isNull()) {
                 throw new SemanticError(it.pos, "Unmatched Type");
             }
         }
@@ -286,7 +284,18 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(FuncCallExprNode it) {
         it.funcName.accept(this);
-        ArrayList<UnitParamNode> oriParam = getUnitParamNodes(it);
+        boolean inClass = (currentScope.inClass() != null);
+        ArrayList<UnitParamNode> oriParam = null;
+        if (it.funcName.funcDef.parameters == null) {
+            if (!it.realParams.isEmpty()) {
+                oriParam = getUnitParamNodes(it, inClass);
+            }
+        } else {
+            oriParam = it.funcName.funcDef.parameters.lists;
+            if (oriParam.size() != it.realParams.size()) {
+                oriParam = getUnitParamNodes(it, inClass);
+            }
+        }
         for (int i = 0; i < it.realParams.size(); ++i) {
             it.realParams.get(i).accept(this);
             if (it.realParams.get(i).type.cannotAssignedTo(oriParam.get(i).type.type)) {
@@ -296,18 +305,21 @@ public class SemanticChecker implements ASTVisitor {
         it.type = new Type(it.funcName.funcDef.returnType.type);
     }
 
-    private static ArrayList<UnitParamNode> getUnitParamNodes(FuncCallExprNode it) {
+    private ArrayList<UnitParamNode> getUnitParamNodes(FuncCallExprNode it, boolean inClass) {
         ArrayList<UnitParamNode> oriParam = null;
-        if (it.funcName.funcDef.parameters == null) {
-            if (!it.realParams.isEmpty()) {
-                throw new SemanticError(it.pos, "number of param not match");
+        if (inClass) {
+            it.funcName.funcDef = globalScope.getFuncDef(((IdentifierNode) it.funcName).name);
+            if (it.funcName.funcDef.parameters == null) {
+                if (!it.realParams.isEmpty()) {
+                    throw new SemanticError(it.pos, "number of param not match");
+                }
+            } else {
+                oriParam = it.funcName.funcDef.parameters.lists;
+                if (oriParam.size() != it.realParams.size()) {
+                    throw new SemanticError(it.pos, "number of param not match");
+                }
             }
-        } else {
-            oriParam = it.funcName.funcDef.parameters.lists;
-            if (oriParam.size() != it.realParams.size()) {
-                throw new SemanticError(it.pos, "number of param not match");
-            }
-        }
+        } else throw new SemanticError(it.pos, "number of param not match");
         return oriParam;
     }
 
@@ -328,7 +340,7 @@ public class SemanticChecker implements ASTVisitor {
                 throw new SemanticError(it.pos, "the variable hasn't declared");
             }
             it.varDef = varDef;
-            it.type = varDef.typeName.type;
+            it.type = varDef.type.type;
         }
     }
 
@@ -370,7 +382,7 @@ public class SemanticChecker implements ASTVisitor {
             if (varDef == null) {
                 throw new SemanticError(it.pos, "no such member" + ((IdentifierNode) it.member).name);
             }
-            it.type = varDef.typeName.type;
+            it.type = varDef.type.type;
             it.varDef = varDef;
         }
     }

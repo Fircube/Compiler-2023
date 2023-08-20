@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class ClassDefNode extends ASTNode {
     public final String className;
     public ArrayList<VarDefNode> members = new ArrayList<>();
-    public ArrayList<ClassConNode> con = new ArrayList<>();
+    public ClassConNode con = null;
     public ArrayList<FuncDefNode> func = new ArrayList<>();
 
     public ClassDefNode(String className, Position pos) {

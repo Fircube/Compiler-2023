@@ -8,8 +8,6 @@ public class IfStmtNode extends StmtNode {
     public ExprNode condition;
     public StmtNode thenStmt, elseStmt;
 
-    //public scope trueScope,falseScope
-
     public IfStmtNode(ExprNode con, StmtNode trueStmt, StmtNode falseStmt, Position pos) {
         super(pos);
         this.condition = con;

@@ -11,8 +11,8 @@ public class FuncScope extends Scope {
         this.returnType = returnType;
     }
 
-    public boolean inLoop() {
-        return super.inLoop();
+    public boolean isInLoop() {
+        return super.isInLoop();
     }
 
     @Override

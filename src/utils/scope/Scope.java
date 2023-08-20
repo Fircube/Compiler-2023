@@ -2,6 +2,8 @@ package src.utils.scope;
 
 import src.ast.rootNode.FuncDefNode;
 import src.ast.stmtNode.UnitVarDefNode;
+import src.ir.Entity;
+import src.ir.inst.AllocaInst;
 import src.utils.Type;
 import src.utils.error.SemanticError;
 
@@ -12,6 +14,8 @@ public class Scope {
     public HashMap<String, UnitVarDefNode> varMembers = new HashMap<>();
     public HashMap<String, FuncDefNode> funcMembers = new HashMap<>();
 
+    public HashMap<String, AllocaInst> vars = new HashMap<>();
+
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
     }
@@ -20,12 +24,18 @@ public class Scope {
         return parentScope;
     }
 
-    public boolean inLoop() {
+    public boolean isInLoop() {
         if (this instanceof LoopScope)
             return true;
         if (!(this instanceof FuncScope) && !(this instanceof ClassScope) && this.parentScope != null)
-            return parentScope.inLoop();
+            return parentScope.isInLoop();
         return false;
+    }
+
+    public LoopScope inLoop() {
+        if (this instanceof LoopScope) return (LoopScope) this;
+        if (parentScope != null) return parentScope.inLoop();
+        return null;
     }
 
     public ClassScope inClass() {
@@ -66,4 +76,14 @@ public class Scope {
         return parentScope.getRetType();
     }
 
+    public void addVars(String name, AllocaInst var) {
+        vars.put(name, var);
+    }
+
+    public Entity getVar(String name, boolean inLocal) {
+        if (inLocal) return vars.get(name);
+        if (vars.containsKey(name)) return vars.get(name);
+        if (parentScope != null) return parentScope.getVar(name, false);
+        return null;
+    }
 }

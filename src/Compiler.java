@@ -19,10 +19,10 @@ import java.io.InputStream;
 public class Compiler {
     public static void main(String[] args) throws Exception {
         InputStream input = System.in;
-        boolean online = true;
+        boolean online = false;
 
         if (!online) { //local
-            input = new FileInputStream("testcases/sema/symbol-package/symbol-2.mx");
+            input = new FileInputStream("testcases/sema/misc-package/misc-6.mx");
         }
 
         try {

@@ -6,13 +6,13 @@ import src.ast.rootNode.TypeNode;
 import src.utils.Position;
 
 public class UnitVarDefNode extends StmtNode {
-    public TypeNode typeName;
+    public TypeNode type;
     public String name;
     public ExprNode expr;
 
-    public UnitVarDefNode(TypeNode typeName, String name, ExprNode expr, Position pos) {
+    public UnitVarDefNode(TypeNode type, String name, ExprNode expr, Position pos) {
         super(pos);
-        this.typeName = typeName;
+        this.type = type;
         this.name = name;
         this.expr = expr;
     }

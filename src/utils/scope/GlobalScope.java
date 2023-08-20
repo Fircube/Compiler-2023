@@ -4,6 +4,9 @@ import src.ast.rootNode.FuncDefNode;
 import src.ast.rootNode.ParamNode;
 import src.ast.rootNode.TypeNode;
 import src.ast.rootNode.UnitParamNode;
+import src.ir.Function;
+import src.ir.constant.GlobalVar;
+import src.ir.type.ClassType;
 import src.utils.Position;
 import src.utils.error.SemanticError;
 
@@ -11,6 +14,11 @@ import java.util.HashMap;
 
 public class GlobalScope extends Scope {
     public HashMap<String, ClassScope> classes = new HashMap<>();
+
+    private HashMap<String, GlobalVar> globalVars = new HashMap<>();
+    private HashMap<String, ClassType> classTypes = new HashMap<>();
+    private HashMap<String, Function> functions = new HashMap<>();
+
 
     public GlobalScope() {
         super(null);
@@ -56,7 +64,7 @@ public class GlobalScope extends Scope {
 
     public void addClassDef(ClassScope classScope, Position pos) {
         if (classes.containsKey(classScope.className)) {
-            throw new SemanticError(pos, "Duplicate class: '" + classScope.className + "'");
+            throw new SemanticError(pos, "Multiple definition of class: '" + classScope.className + "'");
         }
         if (funcMembers.containsKey(classScope.className)) {
             throw new SemanticError(pos, "Class name '" + classScope.className + "' is the same as the global function name");
@@ -87,4 +95,29 @@ public class GlobalScope extends Scope {
     public FuncDefNode getFuncDef(String name) {
         return funcMembers.get(name);
     }
+
+    public void addGlobalVar(String name, GlobalVar var) {
+        globalVars.put(name, var);
+    }
+
+    public GlobalVar getGlobalVar(String name) {
+        return globalVars.get(name);
+    }
+
+    public void addClassType(String name, ClassType cls) {
+        classTypes.put(name, cls);
+    }
+
+    public ClassType getClassType(String name) {
+        return classTypes.get(name);
+    }
+
+    public void addFunction(String name,Function func) {
+        functions.put(name, func);
+    }
+
+    public Function getFunction(String name) {
+        return functions.get(name);
+    }
+
 }

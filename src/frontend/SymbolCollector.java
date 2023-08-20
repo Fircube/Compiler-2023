@@ -36,9 +36,7 @@ public class SymbolCollector implements ASTVisitor {
         for (var i : it.members) {
             i.accept(this);
         }
-        for (var i : it.con) {
-            i.accept(this);
-        }
+        it.con.accept(this);
         for (var i : it.func) {
             i.accept(this);
         }

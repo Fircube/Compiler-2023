@@ -3,11 +3,16 @@ package src.utils.scope;
 import src.ast.rootNode.ClassConNode;
 import src.ast.rootNode.FuncDefNode;
 import src.ast.stmtNode.UnitVarDefNode;
+import src.ir.Function;
 import src.utils.error.SemanticError;
+
+import java.util.HashMap;
 
 public class ClassScope extends Scope {
     public String className;
     public ClassConNode con;
+
+    public HashMap<String, Function> functions = new HashMap<>();
 
     public ClassScope(String className, GlobalScope parent) {
         super(parent);
@@ -35,5 +40,13 @@ public class ClassScope extends Scope {
     @Override
     public FuncDefNode getFuncDef(String name) {
         return funcMembers.get(name);
+    }
+
+    public void addFunction(String name,Function func) {
+        functions.put(name, func);
+    }
+
+    public Function getFunction(String name) {
+        return functions.get(name);
     }
 }

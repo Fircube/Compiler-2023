@@ -52,12 +52,14 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
             newClass.members.add((VarDefNode) visit(i));
         }
         if (ctx.classConstructor() != null) {
+            if (ctx.classConstructor().size() > 1)
+                throw new SemanticError(new Position(ctx), "Multiple definition of Constructor");
             for (var i : ctx.classConstructor()) {
                 ClassConNode con = (ClassConNode) visit(i);
                 if (!con.className.equals(newClass.className)) {
                     throw new SemanticError(new Position(i), "The constructor name does not match the class name.");
                 }
-                newClass.con.add(con);
+                newClass.con=con;
             }
         }
         for (var i : ctx.funcDef()) {
@@ -78,7 +80,7 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
         VarDefNode varDef = new VarDefNode(type, new Position(ctx));
         for (var i : ctx.unitVarDef()) {
             UnitVarDefNode unit = (UnitVarDefNode) visit(i);
-            unit.typeName = type;
+            unit.type = type;
             varDef.defs.add(unit);
         }
         return varDef;
