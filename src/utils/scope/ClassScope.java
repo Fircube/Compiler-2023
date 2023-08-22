@@ -13,6 +13,7 @@ public class ClassScope extends Scope {
     public ClassConNode con;
 
     public HashMap<String, Function> functions = new HashMap<>();
+    public HashMap<String, Integer> varIndex = new HashMap<>();
 
     public ClassScope(String className, GlobalScope parent) {
         super(parent);
@@ -22,11 +23,16 @@ public class ClassScope extends Scope {
     @Override
     public void addVarDef(UnitVarDefNode var) {
         super.addVarDef(var);
+        varIndex.put(var.name, varIndex.size());
     }
 
     @Override
     public UnitVarDefNode getVarDef(String name, boolean isLocal) {
         return super.getVarDef(name, isLocal);
+    }
+
+    public Integer getVarIdx(String name) {
+       return varIndex.get(name);
     }
 
     @Override

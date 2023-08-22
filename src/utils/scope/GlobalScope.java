@@ -24,7 +24,7 @@ public class GlobalScope extends Scope {
         super(null);
     }
 
-    public void initialize() {
+    public void initAST() {
         TypeNode VoidType = new TypeNode("void", false, null);
         TypeNode IntType = new TypeNode("int", false, null);
         TypeNode StringType = new TypeNode("string", true, null);
@@ -61,6 +61,8 @@ public class GlobalScope extends Scope {
 
         ///funcMembers.put("size", new FuncDefNode(IntType, "size", null, null, null));
     }
+
+
 
     public void addClassDef(ClassScope classScope, Position pos) {
         if (classes.containsKey(classScope.className)) {

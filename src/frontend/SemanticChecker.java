@@ -330,15 +330,11 @@ public class SemanticChecker implements ASTVisitor {
             FuncDefNode funcDef = null;
             if (classScope != null) funcDef = classScope.getFuncDef(it.name);
             if (funcDef == null) funcDef = globalScope.getFuncDef(it.name);
-            if (funcDef == null) {
-                throw new SemanticError(it.pos, "the function hasn't declared");
-            }
+            if (funcDef == null) throw new SemanticError(it.pos, "the function hasn't declared");
             it.funcDef = funcDef;
         } else {
             var varDef = currentScope.getVarDef(it.name, false);
-            if (varDef == null) {
-                throw new SemanticError(it.pos, "the variable hasn't declared");
-            }
+            if (varDef == null) throw new SemanticError(it.pos, "the variable hasn't declared");
             it.varDef = varDef;
             it.type = varDef.type.type;
         }

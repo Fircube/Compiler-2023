@@ -3,7 +3,7 @@ package src.ir.constant;
 import src.ir.Entity;
 import src.ir.type.*;
 
-public class GlobalVar extends Const {
+public class GlobalVar extends Const { // A global variable is essentially a pointer
     public Entity init;
 
     public GlobalVar(BaseType type, String name) {

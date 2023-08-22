@@ -35,7 +35,7 @@ public class Compiler {
 
     public static void compile(InputStream input) throws Exception {
         GlobalScope globalScope = new GlobalScope();
-        globalScope.initialize();
+        globalScope.initAST();
 
         MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
         lexer.removeErrorListeners();

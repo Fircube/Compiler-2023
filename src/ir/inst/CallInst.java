@@ -20,6 +20,12 @@ public class CallInst extends Inst {
         paramList.addAll(Arrays.asList(params));
     }
 
+    public CallInst(String name, Block belonging, Function func, ArrayList<Entity> params) {
+        super(((FuncType) func.type).retType, name, belonging);
+        this.func = func;
+        paramList.addAll(params);
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();

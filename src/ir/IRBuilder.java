@@ -4,24 +4,214 @@ import src.ast.ASTVisitor;
 import src.ast.exprNode.*;
 import src.ast.rootNode.*;
 import src.ast.stmtNode.*;
+import src.ir.constant.*;
+import src.ir.inst.*;
+import src.ir.type.*;
+import src.utils.Position;
+import src.utils.Type;
+import src.utils.error.IRError;
+import src.utils.scope.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class IRBuilder implements ASTVisitor {
-    public IRBuilder() {}
+    private GlobalScope globalScope;
 
-    @Override
-    public void visit(ProgramNode it) {
+    private Scope curScope;
+    private Block curBlock;
+    private Function curFunc;
+
+    private String curClsName;
+    private ClassScope curClsScope;
+    private ClassType curClsType;
+
+    public HashMap<String, Entity> entities = new HashMap<>();
+
+    public IRBuilder(GlobalScope globalScope) {
+        this.curScope = this.globalScope = globalScope;
     }
 
     @Override
+    public void visit(ProgramNode it) {
+        // init class
+        for (var i : it.defs) {
+            if (i instanceof ClassDefNode cls) {
+                ClassType clsType = new ClassType("%class." + cls.className, 0);
+                globalScope.addClassType(cls.className, clsType);
+                curScope = globalScope.getClassScope(cls.className);
+                for (var vars : cls.members) {
+                    for (var v : vars.defs) {
+                        v.type.accept(this);
+                        clsType.memberTypes.add(v.type.irType);
+                    }
+                }
+                clsType.size = clsType.memberTypes.size() << 2;
+
+                for (var func : cls.func) {
+                    func.returnType.accept(this);
+                    FuncType funcType = new FuncType(func.returnType.irType);
+                    funcType.paramTypes.add(new PtrType(clsType)); // add this pointer
+                    for (var p : func.parameters.lists) {
+                        p.type.accept(this);
+                        funcType.paramTypes.add(p.type.irType);
+                    }
+                    String funcName = "@%s.%s".formatted(cls.className, func.funcName);
+                    Function function = new Function(funcType, funcName, true, cls.className);
+                    ((ClassScope) curScope).functions.put(func.funcName, function);
+                }
+                FuncType funcType = new FuncType(new VoidType());
+                funcType.paramTypes.add(new PtrType(clsType)); // add this pointer
+                String funcName = "@%s.%s".formatted(cls.className, cls.className);
+                Function function = new Function(funcType, funcName, true, cls.className);
+                ((ClassScope) curScope).functions.put(cls.className, function);
+            }
+            // declare global variable
+            if (i instanceof VarDefNode vars) {
+                for (var j : vars.defs) {
+                    j.type.accept(this);
+                    globalScope.addGlobalVar(j.name, new GlobalVar(j.type.irType, rename("@" + j.name)));
+                }
+            }
+            // declare global function
+            if (i instanceof FuncDefNode func) {
+                func.returnType.accept(this);
+                FuncType funcType = new FuncType(func.returnType.irType);
+                for (var p : func.parameters.lists) {
+                    p.type.accept(this);
+                    funcType.paramTypes.add(p.type.irType);
+                }
+                String funcName;
+                funcName = "@%s".formatted(func.funcName);
+                Function function = new Function(funcType, funcName, false, null);
+                globalScope.addFunction(func.funcName, function);
+            }
+        }
+
+        // init global variables
+        // In order to keep all init functions in one function, initialization is operated at root
+        FuncType funcType = new FuncType(new VoidType());
+        String funcName = "@_global_variable_init";
+        curFunc = new Function(funcType, funcName, false, null);
+        globalScope.addFunction("_global_var_init", curFunc);
+        curFunc.entryBlock = new Block("entry");
+        curFunc.exit = new RetInst(null); // return void
+        curBlock = curFunc.entryBlock;
+        for (var i : it.defs) {
+            if (i instanceof VarDefNode vars) {
+                for (var j : vars.defs) {
+                    GlobalVar v = globalScope.getGlobalVar(j.name);
+                    if (j.expr == null) continue;
+                    j.expr.accept(this);
+                    if (j.expr.val instanceof Const) v.init = j.expr.val;
+                    else new StoreInst(getValue(j.expr), v, curBlock);
+                }
+            }
+        }
+        if (!curBlock.terminated) curFunc.exit.addToBlock(curBlock);
+
+        curScope = globalScope;
+        curBlock = null;
+        curFunc = null;
+
+        for (var i : it.defs) {
+            if (i instanceof ClassDefNode) {
+                i.accept(this);
+            }
+        }
+        for (var i : it.defs) {
+            if (i instanceof FuncDefNode) {
+                i.accept(this);
+            }
+        }
+    }
+
+    @Override//
     public void visit(ClassConNode it) {
+        curFunc = curClsScope.functions.get(curClsName);
+        curFunc.exit = new RetInst(null);
+        curBlock = curFunc.entryBlock;
+
+        PtrType thisPtr = new PtrType(curClsType);
+        Entity value = new Entity(thisPtr, rename("%this"));
+        curFunc.addParams(value);
+        AllocaInst ptr = new AllocaInst(thisPtr, rename("%this.addr"), curBlock);
+        curScope.vars.put("this", ptr);
+        new StoreInst(value, ptr, curBlock);
+
+        it.suite.accept(this);
+        if (!curBlock.terminated) curFunc.exit.addToBlock(curBlock);
+        curScope = curScope.getParentScope();
     }
 
     @Override
     public void visit(ClassDefNode it) {
+        curClsName = it.className;
+        curClsScope = globalScope.getClassScope(curClsName);
+        curClsType = globalScope.getClassType(curClsName);
+        curScope = curClsScope;
+        if (it.con != null) {
+            it.con.accept(this);
+        } else {
+            curFunc = curClsScope.getFunction(curClsName);
+            curBlock = curFunc.entryBlock;
+            PtrType thisPtr = new PtrType(curClsType);
+            curFunc.addParams(new Entity(thisPtr, rename("%this")));
+            new RetInst(curBlock);
+        }
+        for (var i : it.func) {
+            i.accept(this);
+        }
+
+        curScope = curScope.getParentScope();
+        curClsName = null;
+        curClsScope = null;
+        curClsType = null;
     }
 
     @Override
     public void visit(FuncDefNode it) {
+        if (curClsScope != null) curFunc = curClsScope.getFunction(it.funcName);
+        else curFunc = globalScope.getFunction(it.funcName);
+        curScope = new FuncScope(it.returnType.type, curScope);
+        curBlock = curFunc.entryBlock;
+        if (it.funcName.equals("main")) {
+            new CallInst(tempName(), curBlock, globalScope.getFunction("_global_variable_init"));
+        }
+        FuncType funcType = (FuncType) curFunc.type;
+        if (funcType.retType instanceof VoidType) {
+            curFunc.exit = new RetInst(null);
+        } else {
+            curFunc.retValPtr = new AllocaInst(funcType.retType, rename("%retval.addr"), curBlock);
+            curScope.vars.put("retval", (AllocaInst) curFunc.retValPtr);
+            curFunc.exit = new RetInst(new LoadInst(rename("%retval"), curFunc.retValPtr, null), null);
+        }
+        int idx = 0;
+        if (curFunc.isMember) { // add "this" pointer
+            idx = 1;
+            PtrType thisPtr = new PtrType(curClsType);
+            Entity value = new Entity(thisPtr, rename("%this"));
+            curFunc.addParams(value);
+            AllocaInst ptr = new AllocaInst(thisPtr, rename("%this.addr"), curBlock);
+            curScope.vars.put("this", ptr);
+            new StoreInst(value, ptr, curBlock);
+        }
+        for (int i = idx; i < it.parameters.lists.size(); ++i) {
+            UnitParamNode param = it.parameters.lists.get(i);
+            BaseType type = funcType.paramTypes.get(i);
+            Entity value = new Entity(type, rename("%" + param.paramName));
+            curFunc.addParams(value);
+            AllocaInst ptr = new AllocaInst(type, rename("%" + param.paramName + ".addr"), curBlock);
+            curScope.vars.put("this", ptr);
+            new StoreInst(value, ptr, curBlock);
+        }
+
+        it.suite.accept(this);
+        if (!curBlock.terminated) {
+            ((LoadInst) ((RetInst) curFunc.exit).value).addToBlock(curBlock);
+            curFunc.exit.addToBlock(curBlock);
+        }
+        curScope = curScope.getParentScope();
     }
 
     @Override
@@ -30,6 +220,7 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(TypeNode it) {
+        it.irType = convertType(it.type);
     }
 
     @Override
@@ -38,95 +229,540 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(BlockNode it) {
+        curScope = new Scope(curScope);
+        for (var i : it.stmts) i.accept(this);
+        curScope = curScope.getParentScope();
     }
 
     @Override
     public void visit(BreakStmtNode it) {
+        new BrInst(curScope.inLoop().breakBlock, curBlock);
     }
 
     @Override
     public void visit(ContinueStmtNode it) {
+        new BrInst(curScope.inLoop().continueBlock, curBlock);
     }
 
     @Override
     public void visit(ExprStmtNode it) {
+        if (it.expr != null) it.expr.accept(this);
+
     }
 
     @Override
     public void visit(ForStmtNode it) {
+        Block conBlock = new Block(rename("for.con"));
+        Block stepBlock = new Block(rename("for.step"));
+        Block bodyBlock = new Block(rename("for.body"));
+        Block endBlock = new Block(rename("for.end"));
+
+        curScope = new LoopScope(curScope);
+        ((LoopScope) curScope).breakBlock = endBlock;
+        ((LoopScope) curScope).continueBlock = stepBlock;
+        if (it.varInit != null) it.varInit.accept(this);
+        if (it.forInit != null) it.forInit.accept(this);
+        new BrInst(conBlock, curBlock);
+
+        curBlock = conBlock;
+        if (it.forCon != null) {
+            it.forCon.accept(this);
+            new BrInst(getValue(it.forCon), bodyBlock, endBlock, curBlock);
+        } else {
+            new BrInst(bodyBlock, curBlock);
+        }
+
+        curBlock = bodyBlock;
+        it.body.accept(this);
+        new BrInst(stepBlock, curBlock);
+
+        curBlock = stepBlock;
+        if (it.forStep != null) {
+            it.forStep.accept(this);
+        }
+        new BrInst(conBlock, curBlock);
+
+        curBlock = endBlock;
+        curScope = curScope.getParentScope();
     }
 
     @Override
     public void visit(IfStmtNode it) {
+        it.condition.accept(this);
+        Block thenBlock = new Block(rename("if.then"));
+        Block elseBlock = new Block(rename("if.else"));
+        Block endBlock = new Block(rename("if.end"));
+
+        new BrInst(getValue(it.condition), thenBlock, elseBlock, curBlock);
+
+        curScope = new Scope(curScope);
+        curBlock = thenBlock;
+        it.thenStmt.accept(this);
+        new BrInst(endBlock, curBlock);
+        curScope = curScope.getParentScope();
+
+        curBlock = elseBlock;
+        if (it.elseStmt != null) {
+            curScope = new Scope(curScope);
+            it.elseStmt.accept(this);
+            curScope = curScope.getParentScope();
+        }
+        new BrInst(endBlock, curBlock);
+
+        curBlock = endBlock;
     }
 
     @Override
     public void visit(ReturnStmtNode it) {
+        if (it.ret != null) {
+            it.ret.accept(this);
+            new StoreInst(getValue(it.ret), curFunc.retValPtr, curBlock);
+        }
+        new RetInst(curBlock);
     }
+
 
     @Override
     public void visit(UnitVarDefNode it) {
+        it.type.accept(this);
+        var ptr = new AllocaInst(it.type.irType, rename("%" + it.name + ".addr"), curBlock);
+        if (it.expr != null) {
+            it.expr.accept(this);
+            new StoreInst(getValue(it.expr), ptr, curBlock);
+        }
+        curScope.addVars(it.name, ptr);
     }
 
     @Override
     public void visit(VarDefNode it) {
+        for (var i : it.defs) i.accept(this);
     }
 
     @Override
     public void visit(WhileStmtNode it) {
+        Block conBlock = new Block(rename("while.con"));
+        Block bodyBlock = new Block(rename("while.body"));
+        Block endBlock = new Block(rename("while.end"));
+
+        curScope = new LoopScope(curScope);
+        ((LoopScope) curScope).breakBlock = endBlock;
+        ((LoopScope) curScope).continueBlock = conBlock;
+        new BrInst(conBlock, curBlock);
+
+        curBlock = conBlock;
+        it.condition.accept(this);
+        new BrInst(getValue(it.condition), bodyBlock, endBlock, curBlock);
+
+        curBlock = bodyBlock;
+        it.body.accept(this);
+        new BrInst(conBlock, curBlock);
+
+        curBlock = endBlock;
+        curScope = curScope.getParentScope();
     }
 
     @Override
     public void visit(ArrayExprNode it) {
+        it.arrayName.accept(this);
+        Entity array = getValue(it.arrayName);
+        it.index.accept(this);
+        new GetElementPtrInst(array.type, rename("array"), curBlock, array, getValue(it.index));
     }
 
     @Override
     public void visit(AssignExprNode it) {
+        it.lhs.accept(this);
+        it.rhs.accept(this);
+        new StoreInst(getValue(it.rhs), it.lhs.ptr, curBlock);
     }
 
     @Override
     public void visit(BinaryExprNode it) {
+        it.lhs.accept(this);
+        if (it.op.equals("&&")) {
+            if (getValue(it.lhs) instanceof IntConst b) {
+                if (b.value == 0) {
+                    it.val = new BoolConst(false);
+                } else {
+                    it.rhs.accept(this);
+                    it.val = it.rhs.val;
+                }
+                return;
+            }
+            it.ptr = new AllocaInst(new IntType(1), rename("%and.result.addr"), curBlock);
+            curScope.addVars("ans.result", (AllocaInst) it.ptr);
+            Block rhsBlock = new Block(rename("and.rhs"));
+            Block skipBlock = new Block(rename("and.skip"));
+            Block endBlock = new Block(rename("and.end"));
+            new BrInst(getValue(it.lhs), rhsBlock, skipBlock, curBlock);
+
+            curBlock = rhsBlock;
+            it.rhs.accept(this);
+            new StoreInst(getValue(it.rhs), it.ptr, curBlock);
+            new BrInst(endBlock, curBlock);
+
+            curBlock = skipBlock;
+            new StoreInst(new BoolConst(false), it.ptr, curBlock);
+            new BrInst(endBlock, curBlock);
+
+            curBlock = endBlock;
+            return;
+        } else if (it.op.equals("||")) {
+            if (getValue(it.lhs) instanceof IntConst b) {
+                if (b.value == 0) {
+                    it.rhs.accept(this);
+                    it.val = it.rhs.val;
+                } else {
+                    it.val = new BoolConst(true);
+                }
+                return;
+            }
+            it.ptr = new AllocaInst(new IntType(1), rename("%or.result.addr"), curBlock);
+            curScope.addVars("or.result", (AllocaInst) it.ptr);
+            Block rhsBlock = new Block(rename("or.rhs"));
+            Block skipBlock = new Block(rename("or.skip"));
+            Block endBlock = new Block(rename("or.end"));
+            new BrInst(getValue(it.lhs), skipBlock, rhsBlock, curBlock);
+
+            curBlock = skipBlock;
+            new StoreInst(new BoolConst(true), it.ptr, curBlock);
+            new BrInst(endBlock, curBlock);
+
+            curBlock = rhsBlock;
+            it.rhs.accept(this);
+            new StoreInst(getValue(it.rhs), it.ptr, curBlock);
+            new BrInst(endBlock, curBlock);
+
+            curBlock = endBlock;
+            return;
+        }
+        it.rhs.accept(this);
+        if (it.lhs.type.isString()) {
+            it.val = new CallInst(tempName(), curBlock, getStrFunc(it.op), getValue(it.lhs), getValue(it.rhs));
+            return;
+        }
+        if (it.lhs.val instanceof IntConst l && it.rhs.val instanceof IntConst r) {
+            if ((it.op.equals("/") || it.op.equals("%")) && r.value == 0)
+                throw new IRError(it.pos, "The divisor cannot be 0");
+            switch (it.op) {
+                case "+" -> it.val = new IntConst(l.value + r.value);
+                case "-" -> it.val = new IntConst(l.value - r.value);
+                case "*" -> it.val = new IntConst(l.value * r.value);
+                case "/" -> it.val = new IntConst(l.value / r.value);
+                case "%" -> it.val = new IntConst(l.value % r.value);
+                case ">" -> it.val = new BoolConst(l.value > r.value);
+                case "<" -> it.val = new BoolConst(l.value < r.value);
+                case ">=" -> it.val = new BoolConst(l.value >= r.value);
+                case "<=" -> it.val = new BoolConst(l.value <= r.value);
+                case "!=" -> it.val = new BoolConst(l.value != r.value);
+                case "==" -> it.val = new BoolConst(l.value == r.value);
+                case ">>" -> it.val = new IntConst(l.value >> r.value);
+                case "<<" -> it.val = new IntConst(l.value << r.value);
+                case "&" -> it.val = new IntConst(l.value & r.value);
+                case "|" -> it.val = new IntConst(l.value | r.value);
+                case "^" -> it.val = new IntConst(l.value ^ r.value);
+                default -> throw new IRError(it.pos, "unknown operator");
+            }
+            return;
+        }
+
+        String name = null;
+        switch (it.op) {
+            case ">" -> name = "gt";
+            case "<" -> name = "lt";
+            case ">=" -> name = "ge";
+            case "<=" -> name = "le";
+            case "!=" -> name = "ne";
+            case "==" -> name = "eq";
+        }
+        if (name != null) {
+            it.val = new IcmpInst(it.op, getValue(it.lhs), getValue(it.rhs), rename("%" + name + ".result"), curBlock);
+            return;
+        }
+        switch (it.op) {
+            case "+" -> name = "add";
+            case "-" -> name = "sub";
+            case "*" -> name = "mul";
+            case "/" -> name = "dev";
+            case "%" -> name = "mod";
+            case ">>" -> name = "rshift";
+            case "<<" -> name = "lshift";
+            case "&" -> name = "bitand";
+            case "|" -> name = "bitor";
+            case "^" -> name = "bitxor";
+            default -> throw new IRError(it.pos, "unknown operator");
+        }
+        it.val = new BinaryInst(it.op, getValue(it.lhs), getValue(it.rhs), rename("%" + name + ".result"), curBlock);
     }
 
     @Override
     public void visit(FuncCallExprNode it) {
+        it.funcName.accept(this);
+        Function function = (Function) it.funcName.val;
+        ArrayList<Entity> params = new ArrayList<Entity>();
+        int idx = 0;
+        if (function.isMember) { // add "this" pointer
+            idx = 1;
+            ClassScope classScope = curScope.inClass();
+            if (classScope != null && classScope.className.equals(function.className)) {
+                params.add(new LoadInst(rename("%this"), curScope.getVar("this", false), curBlock));
+            } else {
+                ClassScope ori = globalScope.getClassScope(function.className);
+                params.add(ori.getVar("this", false));
+            }
+        }
+        for (int i = 0; i < it.realParams.size(); ++i) {
+            var param = it.realParams.get(i);
+            param.accept(this);
+            Entity val = getValue(param);
+            val.type = ((FuncType) function.type).paramTypes.get(i + idx); // null as argument
+            params.add(val);
+        }
+        it.val = new CallInst(tempName(), curBlock, function, params);
     }
 
     @Override
     public void visit(IdentifierNode it) {
+        if (it.isFunc) {
+            if (curClsScope == null) it.val = globalScope.getFunction(it.name);
+            if (it.val == null) it.val = curClsScope.getFunction(it.name);
+        } else {
+            it.ptr = curScope.getVar(it.name, false);
+            if (it.ptr == null) { // member
+                Entity thisPtr = new LoadInst(rename("%this"), curScope.getVar("this", false), curBlock);
+                Integer index = curClsScope.getVarIdx(it.name);
+                it.ptr = new GetElementPtrInst(new PtrType(curClsType.memberTypes.get(index)), rename("%" + it.name), curBlock, thisPtr, new IntConst(0), new IntConst(index));
+            }
+        }
     }
 
     @Override
     public void visit(LiteralNode it) {
+        if (it.type.isThis()) {
+            it.ptr = curScope.getVar("this", false);
+        } else {
+            switch (it.type.typeName) {
+                case "int" -> it.val = new IntConst(Integer.parseInt(it.content));
+                case "bool" -> it.val = it.content.equals("true") ? new BoolConst(true) : new BoolConst(false);
+                case "null" -> it.val = new NullConst();
+                case "string" -> {
+                    Entity s;
+                    if (entities.containsKey(it.content)) s = entities.get(it.content);
+                    else {
+                        s = new StringConst(rename("@str"), it.content);
+                        entities.put(it.content, s);
+                    }
+                    it.val = new GetElementPtrInst(new PtrType(new IntType(8)), tempName(), curBlock, s, new IntConst(0), new IntConst(0));
+                }
+                default -> throw new IRError(it.pos, "unknown literal");
+            }
+        }
     }
 
     @Override
     public void visit(MemberExprNode it) {
+        it.className.accept(this);
+        if (it.className.type.isArray) {  // .size
+            var ptr = new AllocaInst(new PtrType(new PtrType(new IntType(32))), rename("%ptr"), curBlock);
+            new StoreInst(getValue(it.className), ptr, curBlock);
+            var ptrArray = new LoadInst(tempName(), ptr, curBlock);
+            var sizePtr = new GetElementPtrInst(new PtrType(new IntType(32)), tempName(), curBlock, ptrArray, new IntConst(-1));
+            it.val = new LoadInst(rename("%array.size"), sizePtr, curBlock);
+        } else if (it.className.type.isString()) {
+            it.val = globalScope.getFunction("_str_" + ((IdentifierNode) it.member).name);
+        } else {
+            it.member.accept(this);
+            String className = it.className.type.typeName;
+            ClassScope classScope = globalScope.getClassScope(className);
+            ClassType classType = globalScope.getClassType(className);
+            if (it.member.isFunc) {
+                it.val = classScope.getFunction(((FuncCallExprNode) it.member).funcName.funcDef.funcName);
+            } else {
+                Integer index = classScope.getVarIdx(((IdentifierNode) it.member).name);
+                it.ptr = new GetElementPtrInst(new PtrType(classType.memberTypes.get(index)), rename("%" + it.member), curBlock, getValue(it.className), new IntConst(0), new IntConst(index));
+            }
+        }
     }
 
 
     @Override
     public void visit(NewExprNode it) {
+        if (it.type.isArray) {
+            var size = new ArrayList<Entity>();
+            for (var i : it.sizeParams) {
+                i.accept(this);
+                size.add(getValue(i));
+            }
+            if (size.isEmpty()) it.val=new NullConst();
+            else {
+                it.val = newArray(convertType(it.type), 0, sizeVals);
+            }
+        } else {
+            String className = it.type.typeName;
+            ClassScope classScope = globalScope.getClassScope(className);
+            ClassType classType = globalScope.getClassType(className);
+
+            var p = new CallInst(rename("%new.ptr"), curBlock, globalScope.getFunction("_malloc"), new IntConst(classType.size()));
+            var ptr = new AllocaInst(new PtrType(new PtrType(classType)), rename("%ptr"), curBlock);
+            new StoreInst(p, ptr, curBlock);
+            it.val = new LoadInst(rename("%new.clsPtr"), ptr, curBlock);
+
+            new CallInst(rename("%new." + className + ".con"), curBlock, classScope.getFunction(className), it.val);
+        }
     }
+
 
     @Override
     public void visit(ParenExprNode it) {
+        it.expr.accept(this);
     }
 
     @Override
     public void visit(PostExprNode it) {
+        it.expr.accept(this);
+        it.val = getValue(it.expr);
+        Entity value;
+        switch (it.op) {
+            case "++" -> value = new BinaryInst("+", it.val, new IntConst(1), rename("%inc"), curBlock);
+            case "--" -> value = new BinaryInst("-", it.val, new IntConst(1), rename("%dec"), curBlock);
+            default -> value = null;
+        }
+        new StoreInst(value, it.expr.ptr, curBlock);
     }
 
     @Override
     public void visit(PreExprNode it) {
+        it.expr.accept(this);
+        it.ptr = it.expr.ptr;
+        switch (it.op) {
+            case "++" -> it.val = new BinaryInst("+", getValue(it.expr), new IntConst(1), rename("%inc"), curBlock);
+            case "--" -> it.val = new BinaryInst("-", getValue(it.expr), new IntConst(1), rename("%dec"), curBlock);
+            default -> it.val = null;
+        }
+        new StoreInst(it.val, it.expr.ptr, curBlock);
     }
 
     @Override
     public void visit(TernaryExprNode it) {
+        it.condition.accept(this);
+        Block trueBlock = new Block(rename("ter.true"));
+        Block falseBlock = new Block(rename("ter.false"));
+        Block endBlock = new Block(rename("ter.end"));
+
+        new BrInst(getValue(it.condition), trueBlock, falseBlock, curBlock);
+
+        curBlock = trueBlock;
+        it.trueExpr.accept(this);
+        new StoreInst(getValue(it.trueExpr), it.ptr, curBlock);
+        new BrInst(endBlock, curBlock);
+        curBlock = falseBlock;
+        it.falseExpr.accept(this);
+        new StoreInst(getValue(it.falseExpr), it.ptr, curBlock);
+        new BrInst(endBlock, curBlock);
+//        /if (getValue(it.condition) instanceof BoolConst b) {
+//            if (b.value) {
+//                new BrInst(trueBlock, curBlock);
+//                curBlock = trueBlock;
+//                it.trueExpr.accept(this);
+//                new StoreInst(getValue(it.trueExpr), it.ptr, curBlock);
+//                new BrInst(endBlock, curBlock);
+//            } else {
+//                new BrInst(falseBlock, curBlock);
+//                curBlock = falseBlock;
+//                it.falseExpr.accept(this);
+//                new StoreInst(getValue(it.falseExpr), it.ptr, curBlock);
+//                new BrInst(endBlock, curBlock);
+//            }
+//        } else throw new IRError(new Position(0, 0), "Failed short circuit evaluation");
+        curBlock = endBlock;
     }
 
     @Override
     public void visit(UnaryExprNode it) {
+        it.expr.accept(this);
+        if (it.expr.val instanceof Const) {
+            if (it.expr.val instanceof IntConst) {
+                switch (it.op) {
+                    case "+" -> it.val = new IntConst(((IntConst) it.expr.val).value);
+                    case "-" -> it.val = new IntConst(-(((IntConst) it.expr.val).value));
+                    case "!" -> it.val = new IntConst(((IntConst) it.expr.val).value == 0 ? 1 : 0);
+                    case "~" -> it.val = new IntConst(~(((IntConst) it.expr.val).value));
+                    default -> it.val = null;
+                }
+            } else {
+                if (it.op.equals("!")) it.val = new IntConst(((BoolConst) it.expr.val).value ? 0 : 1);
+            }
+            return;
+        }
+        switch (it.op) {
+            case "+" -> it.val = getValue(it.expr);
+            case "-" -> it.val = new BinaryInst("-", new IntConst(0), getValue(it.expr), rename("%sub"), curBlock);
+            case "!" -> it.val = new BinaryInst("^", getValue(it.expr), new BoolConst(true), "%not", curBlock);
+            case "~" -> it.val = new BinaryInst("^", getValue(it.expr), new IntConst(-1), "%bitNot", curBlock);
+            default -> it.val = null;
+        }
+    }
+
+    // convert from Type to BaseType
+    private BaseType convertType(Type type) {
+        if (type.isArray) {
+            Type upper = new Type(type);
+            upper.dimension--;
+            upper.isArray = (upper.dimension != 0);
+            return new PtrType(convertType(upper));
+        } else {
+            if (type.isClass) {
+                if (type.isString()) return new PtrType(new IntType(8));
+                else return new PtrType(globalScope.getClassType(type.typeName));
+            } else {
+                if (type.isInt()) return new IntType(32);
+                if (type.isBool()) return new IntType(1);
+                if (type.isVoid()) return new VoidType();
+                if (type.isNull()) return new PtrType(new IntType(32));
+                throw new IRError(new Position(0, 0), "undefined type");
+            }
+        }
+    }
+
+    private HashMap<String, Integer> varRecord = new HashMap<>();
+
+    private String rename(String name) {
+        var times = varRecord.get(name);
+        String renew = name;
+        if (times == null) {
+            times = 0;
+        } else {
+            renew += "." + times;
+        }
+        varRecord.put(name, ++times);
+        return renew;
+    }
+
+    private Entity getValue(ExprNode node) {
+        if (node.val != null) return node.val;
+        else return new LoadInst(rename(tempName()), node.ptr, curBlock);
+    }
+
+    private int tempNum = 0;
+
+    private String tempName() {
+        return "%" + tempNum++;
+    }
+
+    private Function getStrFunc(String op) {
+        String name = switch (op) {
+            case "+" -> "cat";
+            case "==" -> "eq";
+            case "!=" -> "ne";
+            case ">" -> "gt";
+            case ">=" -> "ge";
+            case "<" -> "lt";
+            case "<=" -> "le";
+            default -> throw new IRError(new Position(0, 0), "unknown str operator");
+        };
+        return globalScope.getFunction("_str_" + name);
     }
 }
+
+
 
