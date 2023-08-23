@@ -12,6 +12,6 @@ public class ArrayType extends BaseType {
 
     @Override
     public String toString() {
-        return "[ %d x %s]".formatted(len, type);
+        return "[%d x %s]".formatted(len, type);
     }
 }

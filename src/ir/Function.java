@@ -14,12 +14,12 @@ public class Function extends Const {
     public Inst exit;
     public boolean isMember;
 
-    public String className;
+//    public String className;
 
-    public Function(FuncType type, String name, boolean isMember,String className) {
+    public Function(FuncType type, String name, boolean isMember) {
         super(type, name);
         this.isMember = isMember;
-        this.className=className;
+//        this.className=className;
     }
 
     public void addParams(Entity param){params.add(param);}

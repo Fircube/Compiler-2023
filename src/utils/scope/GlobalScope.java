@@ -20,6 +20,8 @@ public class GlobalScope extends Scope {
     public HashMap<String, GlobalVar> globalVars = new HashMap<>();
     public HashMap<String, ClassType> classTypes = new HashMap<>();
     public HashMap<String, Function> functions = new HashMap<>();
+    public HashMap<String, Function> buildinFunc = new HashMap<>();
+
 
     public HashMap<String, Entity> entities = new HashMap<>();
 
@@ -67,24 +69,37 @@ public class GlobalScope extends Scope {
 
     public void initIR() {
         BaseType VoidType = new VoidType();
+        BaseType BoolType = new IntType(1);
         BaseType i32Type = new IntType(32);
         BaseType i8PtrType = new PtrType(new IntType(8));
-        addGlobalIRFunc("print", false, null, VoidType, i8PtrType);
-        addGlobalIRFunc("println", false, null, VoidType, i8PtrType);
-        addGlobalIRFunc("printInt", false, null, VoidType, i32Type);
-        addGlobalIRFunc("printlnInt", false, null, VoidType, i32Type);
-        addGlobalIRFunc("getString", false, null, i8PtrType);
-        addGlobalIRFunc("getInt", false, null, i32Type);
-        addGlobalIRFunc("toString", false, null, i8PtrType, i32Type);
-        addGlobalIRFunc("malloc", false, null, i8PtrType, i32Type);
+        addGlobalIRFunc("print", false, VoidType, i8PtrType);
+        addGlobalIRFunc("println", false, VoidType, i8PtrType);
+        addGlobalIRFunc("printInt", false, VoidType, i32Type);
+        addGlobalIRFunc("printlnInt", false, VoidType, i32Type);
+        addGlobalIRFunc("getString", false, i8PtrType);
+        addGlobalIRFunc("getInt", false, i32Type);
+        addGlobalIRFunc("toString", false, i8PtrType, i32Type);
+        addGlobalIRFunc("_malloc", false, i8PtrType, i32Type);
 
+        addGlobalIRFunc("_str_length", true, i32Type, i8PtrType);
+        addGlobalIRFunc("_str_substring", true, i8PtrType, i8PtrType, i32Type, i32Type);
+        addGlobalIRFunc("_str_parseInt", true, i32Type, i8PtrType);
+        addGlobalIRFunc("_str_ord", true, i32Type, i8PtrType, i32Type);
+
+        addGlobalIRFunc("_str_eq", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_ne", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_gt", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_ge", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_lt", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_le", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_cat", false, i8PtrType, i8PtrType, i8PtrType);
     }
 
-    private void addGlobalIRFunc(String funcName, boolean isMember, String className, BaseType returnType, BaseType... paramTypes) {
+    private void addGlobalIRFunc(String funcName, boolean isMember, BaseType returnType, BaseType... paramTypes) {
         FuncType funcType = new FuncType(returnType);
         funcType.paramTypes.addAll(Arrays.asList(paramTypes));
-        Function function = new Function(funcType, "@" + funcName, isMember, className);
-        this.addFunction(funcName, function);
+        Function function = new Function(funcType, "@" + funcName, isMember);
+        this.buildinFunc.put(funcName, function);
     }
 
     public void addClassDef(ClassScope classScope, Position pos) {
@@ -121,11 +136,8 @@ public class GlobalScope extends Scope {
         return funcMembers.get(name);
     }
 
-    public void addGlobalVar(String name, GlobalVar var) {
-        globalVars.put(name, var);
-    }
-
-    public GlobalVar getGlobalVar(String name) {
+    @Override
+    public Entity getVar(String name, boolean recursive) {
         return globalVars.get(name);
     }
 
@@ -142,7 +154,8 @@ public class GlobalScope extends Scope {
     }
 
     public Function getFunction(String name) {
-        return functions.get(name);
+        if (functions.containsKey(name)) return functions.get(name);
+        return buildinFunc.get(name);
     }
 
 }

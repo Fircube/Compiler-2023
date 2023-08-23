@@ -116,7 +116,6 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(ExprStmtNode it) {
         if (it.expr != null) it.expr.accept(this);
-
     }
 
     @Override
@@ -367,10 +366,31 @@ public class SemanticChecker implements ASTVisitor {
         }
         ClassScope classScope = globalScope.getClassScope(it.className.type.typeName);
         if (it.member.isFunc) {
-            FuncDefNode funcDef = classScope.getFuncDef(((IdentifierNode) ((FuncCallExprNode) it.member).funcName).name);
+            FuncCallExprNode funcCall = (FuncCallExprNode) it.member;
+            FuncDefNode funcDef = funcCall.funcName.funcDef = classScope.getFuncDef(((IdentifierNode) funcCall.funcName).name);
             if (funcDef == null) {
                 throw new SemanticError(it.pos, "no such member" + it.member.funcDef.funcName);
             }
+
+            ArrayList<UnitParamNode> oriParam = null;
+            if (funcDef.parameters == null) {
+                if (!funcCall.realParams.isEmpty()) {
+                    throw new SemanticError(it.pos, "number of param not match");
+                }
+            } else {
+                oriParam = funcCall.funcName.funcDef.parameters.lists;
+                if (oriParam.size() != funcCall.realParams.size()) {
+                    throw new SemanticError(it.pos, "number of param not match");
+                }
+            }
+            for (int i = 0; i < funcCall.realParams.size(); ++i) {
+                funcCall.realParams.get(i).accept(this);
+                if (funcCall.realParams.get(i).type.cannotAssignedTo(oriParam.get(i).type.type)) {
+                    throw new SemanticError(it.pos, "parameter's type isn't the same as definition");
+                }
+            }
+            it.member.type = new Type(funcCall.funcName.funcDef.returnType.type);
+
             it.type = funcDef.returnType.type;
             it.funcDef = funcDef;
         } else {

@@ -11,6 +11,8 @@ public class GlobalVar extends Const { // A global variable is essentially a poi
     }
 
     public String toString() {
+        if(init!=null)
+            return "%s = global %s %s, align %d".formatted(name, ((PtrType) type).baseType, init.name(), type.size);
         return "%s = global %s %s, align %d".formatted(name, ((PtrType) type).baseType, init, type.size);
     }
 }

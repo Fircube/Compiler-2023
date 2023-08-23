@@ -26,7 +26,7 @@ public class Compiler {
         boolean online = false;
 
         if (!online) { //local
-            input = new FileInputStream("testcases/input.mx");
+            input = new FileInputStream("src/input.mx");
         }
 
         try {
@@ -62,7 +62,7 @@ public class Compiler {
         var outFile = new FileOutputStream("ir.ll");
         var out = new PrintStream(outFile);
         var irPrinter = new IRPrinter(out, globalScope);
-        irPrinter.visit(ASTRoot);
+        irPrinter.print();
         outFile.close();
     }
 }

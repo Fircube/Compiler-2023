@@ -58,20 +58,20 @@ public class IRBuilder implements ASTVisitor {
                         funcType.paramTypes.add(p.type.irType);
                     }
                     String funcName = "@%s.%s".formatted(cls.className, func.funcName);
-                    Function function = new Function(funcType, funcName, true, cls.className);
+                    Function function = new Function(funcType, funcName, true);
                     ((ClassScope) curScope).functions.put(func.funcName, function);
                 }
                 FuncType funcType = new FuncType(new VoidType());
                 funcType.paramTypes.add(new PtrType(clsType)); // add this pointer
                 String funcName = "@%s.%s".formatted(cls.className, cls.className);
-                Function function = new Function(funcType, funcName, true, cls.className);
+                Function function = new Function(funcType, funcName, true);
                 ((ClassScope) curScope).functions.put(cls.className, function);
             }
             // declare global variable
             if (i instanceof VarDefNode vars) {
                 for (var j : vars.defs) {
                     j.type.accept(this);
-                    globalScope.addGlobalVar(j.name, new GlobalVar(j.type.irType, rename("@" + j.name)));
+                    globalScope.globalVars.put(j.name, new GlobalVar(j.type.irType, rename("@" + j.name)));
                 }
             }
             // declare global function
@@ -84,7 +84,7 @@ public class IRBuilder implements ASTVisitor {
                 }
                 String funcName;
                 funcName = "@%s".formatted(func.funcName);
-                Function function = new Function(funcType, funcName, false, null);
+                Function function = new Function(funcType, funcName, false);
                 globalScope.addFunction(func.funcName, function);
             }
         }
@@ -92,15 +92,15 @@ public class IRBuilder implements ASTVisitor {
         // init global variables
         // In order to keep all init functions in one function, initialization is operated at root
         FuncType funcType = new FuncType(new VoidType());
-        String funcName = "@_global_variable_init";
-        curFunc = new Function(funcType, funcName, false, null);
-        globalScope.addFunction("_global_var_init", curFunc);
+        String funcName = "@global_variable_init";
+        curFunc = new Function(funcType, funcName, false);
+        globalScope.addFunction("global_var_init", curFunc);
         curBlock = curFunc.entryBlock = new Block(rename("entry"), curFunc);
         curFunc.exit = new RetInst(null); // return void
         for (var i : it.defs) {
             if (i instanceof VarDefNode vars) {
                 for (var j : vars.defs) {
-                    GlobalVar v = globalScope.getGlobalVar(j.name);
+                    GlobalVar v = (GlobalVar) globalScope.getVar(j.name, false);
                     if (j.expr == null) continue;
                     j.expr.accept(this);
                     if (j.expr.val instanceof Const) v.init = j.expr.val;
@@ -180,7 +180,7 @@ public class IRBuilder implements ASTVisitor {
         curScope = new FuncScope(it.returnType.type, curScope);
         curBlock = curFunc.entryBlock = new Block(rename("entry"), curFunc);
         if (it.funcName.equals("main")) {
-            new CallInst(tempName(), curBlock, globalScope.getFunction("_global_variable_init"));
+            new CallInst(tempName(), curBlock, globalScope.getFunction("global_var_init"));
         }
         FuncType funcType = (FuncType) curFunc.type;
         if (funcType.retType instanceof VoidType) {
@@ -502,19 +502,18 @@ public class IRBuilder implements ASTVisitor {
         int idx = 0;
         if (function.isMember) { // add "this" pointer
             idx = 1;
-            ClassScope classScope = curScope.inClass();
-            if (classScope != null && classScope.className.equals(function.className)) {
-                params.add(new LoadInst(rename("%this"), curScope.getVar("this", false), curBlock));
-            } else {
-                ClassScope ori = globalScope.getClassScope(function.className);
-                params.add(ori.getVar("this", false));
-            }
+//            if (classScope != null && classScope.className.equals(function.className)) {
+            params.add(new LoadInst(rename("%this"), curScope.getVar("this", false), curBlock));
+//            } else {
+//                ClassScope ori = globalScope.getClassScope(function.className);
+//                params.add(ori.getVar("this", false));
+//            }
         }
         for (int i = 0; i < it.realParams.size(); ++i) {
             var param = it.realParams.get(i);
             param.accept(this);
             Entity val = getValue(param);
-            val.type = ((FuncType) function.type).paramTypes.get(i + idx); // null as argument
+            val.type = ((FuncType) function.type).paramTypes.get(i + idx);
             params.add(val);
         }
         it.val = new CallInst(tempName(), curBlock, function, params);
@@ -548,7 +547,7 @@ public class IRBuilder implements ASTVisitor {
                     Entity s;
                     if (globalScope.entities.containsKey(it.content)) s = globalScope.entities.get(it.content);
                     else {
-                        s = new StringConst(rename("@str"), it.content);
+                        s = new StringConst(rename("@str"), it.content.substring(1,it.content.length()-1));
                         globalScope.entities.put(it.content, s);
                     }
                     it.val = new GetElementPtrInst(new PtrType(new IntType(8)), tempName(), curBlock, s, new IntConst(0), new IntConst(0));
@@ -568,12 +567,31 @@ public class IRBuilder implements ASTVisitor {
         } else if (it.className.type.isString()) {
             it.val = globalScope.getFunction("str_" + ((IdentifierNode) it.member).name);
         } else {
-//            it.member.accept(this);
             String className = it.className.type.typeName;
             ClassScope classScope = globalScope.getClassScope(className);
             ClassType classType = globalScope.getClassType(className);
             if (it.member.isFunc) {
-                it.val = classScope.getFunction(((FuncCallExprNode) it.member).funcName.funcDef.funcName);
+                String funcName = ((IdentifierNode) ((FuncCallExprNode) it.member).funcName).name;
+                Function function = classScope.getFunction(funcName);
+                ArrayList<Entity> params = new ArrayList<>();
+
+                params.add(getValue(it.className));
+//                if (curClsScope != null && curClsScope.className.equals(className)) {
+//                    params.add(new LoadInst(rename("%this"), curScope.getVar("this", false), curBlock));
+//                } else {
+//                    params.add(new LoadInst(rename("%this"), classScope.getVar("this", false), curBlock));
+//                }
+
+                for (int i = 0; i < ((FuncCallExprNode) it.member).realParams.size(); ++i) {
+                    var param = ((FuncCallExprNode) it.member).realParams.get(i);
+                    param.accept(this);
+                    Entity val = getValue(param);
+                    val.type = ((FuncType) function.type).paramTypes.get(i + 1);
+                    params.add(val);
+                }
+
+                it.member.val = new CallInst(tempName(), curBlock, function, params);
+                it.val = function;
             } else {
                 Integer index = classScope.getVarIdx(((IdentifierNode) it.member).name);
                 it.ptr = new GetElementPtrInst(new PtrType(classType.memberTypes.get(index)), rename("%" + it.member), curBlock, getValue(it.className), new IntConst(0), new IntConst(index));
@@ -597,7 +615,7 @@ public class IRBuilder implements ASTVisitor {
             ClassScope classScope = globalScope.getClassScope(className);
             ClassType classType = globalScope.getClassType(className);
 
-            Function malloc = globalScope.getFunction("malloc");
+            Function malloc = globalScope.getFunction("_malloc");
             var ptr = new CallInst(rename("%new.ptr"), curBlock, malloc, new IntConst(classType.size));
             it.val = new BitCastInst(rename("%new.clsPtr"), new PtrType(classType), ptr, curBlock);
 
@@ -607,7 +625,7 @@ public class IRBuilder implements ASTVisitor {
     }
 
     private Entity newArray(BaseType type, int idx, ArrayList<Entity> sizes) {
-        Function malloc = globalScope.getFunction("malloc");
+        Function malloc = globalScope.getFunction("_malloc");
         BaseType baseType = ((PtrType) type).baseType;
         Entity num = sizes.get(idx);
         var size = new BinaryInst("*", num, new IntConst(baseType.size), tempName(), curBlock);
@@ -651,6 +669,8 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(ParenExprNode it) {
         it.expr.accept(this);
+        it.val = it.expr.val;
+        it.ptr = it.expr.ptr;
     }
 
     @Override

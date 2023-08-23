@@ -3,3 +3,5 @@
 /tools
 *.iml
 *.txt
+*.c
+*.ll
