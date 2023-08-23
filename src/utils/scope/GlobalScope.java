@@ -4,20 +4,24 @@ import src.ast.rootNode.FuncDefNode;
 import src.ast.rootNode.ParamNode;
 import src.ast.rootNode.TypeNode;
 import src.ast.rootNode.UnitParamNode;
+import src.ir.Entity;
 import src.ir.Function;
 import src.ir.constant.GlobalVar;
-import src.ir.type.ClassType;
+import src.ir.type.*;
 import src.utils.Position;
 import src.utils.error.SemanticError;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class GlobalScope extends Scope {
     public HashMap<String, ClassScope> classes = new HashMap<>();
 
-    private HashMap<String, GlobalVar> globalVars = new HashMap<>();
-    private HashMap<String, ClassType> classTypes = new HashMap<>();
-    private HashMap<String, Function> functions = new HashMap<>();
+    public HashMap<String, GlobalVar> globalVars = new HashMap<>();
+    public HashMap<String, ClassType> classTypes = new HashMap<>();
+    public HashMap<String, Function> functions = new HashMap<>();
+
+    public HashMap<String, Entity> entities = new HashMap<>();
 
 
     public GlobalScope() {
@@ -59,10 +63,29 @@ public class GlobalScope extends Scope {
 
         this.addClassDef(stringClass, null);
 
-        ///funcMembers.put("size", new FuncDefNode(IntType, "size", null, null, null));
     }
 
+    public void initIR() {
+        BaseType VoidType = new VoidType();
+        BaseType i32Type = new IntType(32);
+        BaseType i8PtrType = new PtrType(new IntType(8));
+        addGlobalIRFunc("print", false, null, VoidType, i8PtrType);
+        addGlobalIRFunc("println", false, null, VoidType, i8PtrType);
+        addGlobalIRFunc("printInt", false, null, VoidType, i32Type);
+        addGlobalIRFunc("printlnInt", false, null, VoidType, i32Type);
+        addGlobalIRFunc("getString", false, null, i8PtrType);
+        addGlobalIRFunc("getInt", false, null, i32Type);
+        addGlobalIRFunc("toString", false, null, i8PtrType, i32Type);
+        addGlobalIRFunc("malloc", false, null, i8PtrType, i32Type);
 
+    }
+
+    private void addGlobalIRFunc(String funcName, boolean isMember, String className, BaseType returnType, BaseType... paramTypes) {
+        FuncType funcType = new FuncType(returnType);
+        funcType.paramTypes.addAll(Arrays.asList(paramTypes));
+        Function function = new Function(funcType, "@" + funcName, isMember, className);
+        this.addFunction(funcName, function);
+    }
 
     public void addClassDef(ClassScope classScope, Position pos) {
         if (classes.containsKey(classScope.className)) {
@@ -114,7 +137,7 @@ public class GlobalScope extends Scope {
         return classTypes.get(name);
     }
 
-    public void addFunction(String name,Function func) {
+    public void addFunction(String name, Function func) {
         functions.put(name, func);
     }
 

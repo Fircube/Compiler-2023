@@ -9,8 +9,14 @@ public class Block extends Entity {
     public LinkedList<Inst> insts = new LinkedList<>();
     public boolean terminated = false;
 
-    public Block(String name) {
+    public Function belonging;
+
+    public Block(String name,Function belonging) {
         super(new LabelType(), name);
+        this.belonging = belonging;
+        if (belonging != null) {
+            belonging.blocks.add(this);
+        }
     }
 
     public void addInst(Inst inst) {

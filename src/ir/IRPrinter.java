@@ -1,56 +1,83 @@
-package src.frontend;
+package src.ir;
 
 import src.ast.ASTVisitor;
 import src.ast.exprNode.*;
 import src.ast.rootNode.*;
 import src.ast.stmtNode.*;
-import src.utils.scope.ClassScope;
-import src.utils.scope.GlobalScope;
+import src.ir.type.*;
+import src.utils.scope.*;
 
-public class SymbolCollector implements ASTVisitor {
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class IRPrinter implements ASTVisitor {
+    public PrintStream os;
+    public String fileName;
+
     public GlobalScope globalScope;
-    public ClassScope classScope = null;
 
-    public SymbolCollector(GlobalScope globalScope) {
+    public IRPrinter(PrintStream os, GlobalScope globalScope) {
+        this.os = os;
+//        this.fileName = fileName;
         this.globalScope = globalScope;
     }
 
     @Override
     public void visit(ProgramNode it) {
-        for (var i : it.defs) {
-            if (i instanceof VarDefNode) {
-                continue;
+        for (String key : globalScope.classTypes.keySet()) {
+            ClassType classType = globalScope.classTypes.get(key);
+            String s = null;
+            if (!classType.memberTypes.isEmpty()) {
+                for (int i = 0; i < classType.memberTypes.size() - 1; ++i) {
+                    s += classType.memberTypes.get(i) + ", ";
+                }
+                s += classType.memberTypes.get(classType.memberTypes.size() - 1);
             }
-            i.accept(this);
+            os.printf("%s = type {%s}\n", classType, s);
         }
+
+        for (String key : globalScope.globalVars.keySet()) {
+            os.println(globalScope.globalVars.get(key));
+        }
+
+        for (String key : globalScope.entities.keySet()) {
+            os.println(globalScope.entities.get(key));
+        }
+
+        for (String key : globalScope.functions.keySet()) {
+            Function func = globalScope.functions.get(key);
+            FuncType funcType = (FuncType) func.type;
+            String s = null;
+            if (!func.params.isEmpty()) {
+                for (int i = 0; i < func.params.size() - 1; ++i) {
+                    s += func.params.get(i).nameWithType() + ", ";
+                }
+                s += func.params.get(funcType.paramTypes.size() - 1).nameWithType();
+            }
+            os.printf("define %s %s(%s) {\n", funcType.retType, func.name, s);
+            for (var i : func.blocks) {
+                os.printf("%s:\n", i.name);
+                for (var j : i.insts) {
+                    os.println("  " + j);
+                }
+                os.println();
+            }
+            os.println("}\n");
+        }
+
     }
 
     @Override
     public void visit(ClassConNode it) {
-        classScope.con = it;
     }
 
     @Override
     public void visit(ClassDefNode it) {
-        classScope = new ClassScope(it.className, globalScope);
-        for (var i : it.members) {
-            i.accept(this);
-        }
-        if (it.con != null) it.con.accept(this);
-        for (var i : it.func) {
-            i.accept(this);
-        }
-        globalScope.addClassDef(classScope, it.pos);
-        this.classScope = null;
     }
 
     @Override
     public void visit(FuncDefNode it) {
-        if (classScope != null) {
-            classScope.addFuncDef(it);
-        } else {
-            globalScope.addFuncDef(it);
-        }
     }
 
     @Override
@@ -79,6 +106,7 @@ public class SymbolCollector implements ASTVisitor {
 
     @Override
     public void visit(ExprStmtNode it) {
+
     }
 
     @Override
@@ -93,22 +121,18 @@ public class SymbolCollector implements ASTVisitor {
     public void visit(ReturnStmtNode it) {
     }
 
+
     @Override
     public void visit(UnitVarDefNode it) {
-        classScope.addVarDef(it);
     }
 
     @Override
     public void visit(VarDefNode it) {
-        for (var i : it.defs) {
-            i.accept(this);
-        }
     }
 
     @Override
     public void visit(WhileStmtNode it) {
     }
-
 
     @Override
     public void visit(ArrayExprNode it) {
@@ -138,6 +162,7 @@ public class SymbolCollector implements ASTVisitor {
     public void visit(MemberExprNode it) {
     }
 
+
     @Override
     public void visit(NewExprNode it) {
     }
@@ -162,3 +187,6 @@ public class SymbolCollector implements ASTVisitor {
     public void visit(UnaryExprNode it) {
     }
 }
+
+
+

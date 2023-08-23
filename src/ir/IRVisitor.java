@@ -12,6 +12,8 @@ public interface IRVisitor {
 
     public void visit(BinaryInst inst);
 
+    public void visit(BitCastInst inst);
+
     public void visit(BrInst inst);
 
     public void visit(CallInst inst);

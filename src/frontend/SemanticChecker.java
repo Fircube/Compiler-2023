@@ -45,7 +45,7 @@ public class SemanticChecker implements ASTVisitor {
     @Override
     public void visit(ClassDefNode it) {
         currentScope = globalScope.getClassScope(it.className);
-        it.con.accept(this);
+        if (it.con != null) it.con.accept(this);
         for (var i : it.func) {
             i.accept(this);
         }

@@ -7,7 +7,7 @@ import src.ir.type.FuncType;
 import java.util.ArrayList;
 
 public class Function extends Const {
-//    public ArrayList<Block> blocks = new ArrayList<>();
+    public ArrayList<Block> blocks = new ArrayList<>();
     public ArrayList<Entity> params = new ArrayList<>();
     public Block entryBlock;
     public Entity retValPtr;

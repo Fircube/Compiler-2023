@@ -7,6 +7,8 @@ import src.ast.ASTBuilder;
 import src.ast.rootNode.ProgramNode;
 import src.frontend.SemanticChecker;
 import src.frontend.SymbolCollector;
+import src.ir.IRBuilder;
+import src.ir.IRPrinter;
 import src.parser.MxLexer;
 import src.parser.MxParser;
 import src.utils.error.MxError;
@@ -14,7 +16,9 @@ import src.utils.error.MxErrorListener;
 import src.utils.scope.GlobalScope;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.PrintStream;
 
 public class Compiler {
     public static void main(String[] args) throws Exception {
@@ -22,7 +26,7 @@ public class Compiler {
         boolean online = false;
 
         if (!online) { //local
-            input = new FileInputStream("testcases/sema/misc-package/misc-6.mx");
+            input = new FileInputStream("testcases/input.mx");
         }
 
         try {
@@ -52,5 +56,13 @@ public class Compiler {
 
         new SymbolCollector(globalScope).visit(ASTRoot);
         new SemanticChecker(globalScope).visit(ASTRoot);
+
+        IRBuilder irBuilder = new IRBuilder(globalScope);
+        irBuilder.visit(ASTRoot);
+        var outFile = new FileOutputStream("ir.ll");
+        var out = new PrintStream(outFile);
+        var irPrinter = new IRPrinter(out, globalScope);
+        irPrinter.visit(ASTRoot);
+        outFile.close();
     }
 }
