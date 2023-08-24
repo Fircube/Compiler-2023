@@ -85,14 +85,14 @@ public class GlobalScope extends Scope {
         addGlobalIRFunc("_str_substring", true, i8PtrType, i8PtrType, i32Type, i32Type);
         addGlobalIRFunc("_str_parseInt", true, i32Type, i8PtrType);
         addGlobalIRFunc("_str_ord", true, i32Type, i8PtrType, i32Type);
+        addGlobalIRFunc("_str_add", false, i8PtrType, i8PtrType, i8PtrType);
 
         addGlobalIRFunc("_str_eq", false, BoolType, i8PtrType, i8PtrType);
         addGlobalIRFunc("_str_ne", false, BoolType, i8PtrType, i8PtrType);
-        addGlobalIRFunc("_str_gt", false, BoolType, i8PtrType, i8PtrType);
-        addGlobalIRFunc("_str_ge", false, BoolType, i8PtrType, i8PtrType);
-        addGlobalIRFunc("_str_lt", false, BoolType, i8PtrType, i8PtrType);
-        addGlobalIRFunc("_str_le", false, BoolType, i8PtrType, i8PtrType);
-        addGlobalIRFunc("_str_cat", false, i8PtrType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_sgt", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_sge", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_slt", false, BoolType, i8PtrType, i8PtrType);
+        addGlobalIRFunc("_str_sle", false, BoolType, i8PtrType, i8PtrType);
     }
 
     private void addGlobalIRFunc(String funcName, boolean isMember, BaseType returnType, BaseType... paramTypes) {

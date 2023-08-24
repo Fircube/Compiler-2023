@@ -12,7 +12,8 @@ public class PhiInst extends Inst {
     public ArrayList<Entity> label = new ArrayList<>();
 
     public PhiInst(BaseType type, String name, Block belonging) {
-        super(type, name, belonging);
+        super(type, name, null);
+        if (belonging != null) belonging.phiInsts.add(this);
     }
 
     public void addBranch(Entity value, Block block) {
@@ -24,10 +25,10 @@ public class PhiInst extends Inst {
     public String toString() {
         StringBuilder s = new StringBuilder("%s = phi %s ".formatted(name, type));
         if (!value.isEmpty()) {
-            s.append("[%s, %s]".formatted(value.get(0).name(), label.get(0).name()));
+            s.append("[%s, %s]".formatted(value.get(0).name(), "%"+label.get(0).name()));
             for (int i = 1; i < value.size(); ++i) {
                 s.append(", ");
-                s.append("[%s, %s]".formatted(value.get(i).name(), label.get(i).name()));
+                s.append("[%s, %s]".formatted(value.get(i).name(), "%"+label.get(i).name()));
             }
         }
         return s.toString();

@@ -16,7 +16,7 @@ public class Entity {
     }
 
     public String nameWithType() {
-        return type + " " + name;
+        return type + " " + name();
     }
 
 }

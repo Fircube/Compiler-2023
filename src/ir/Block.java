@@ -7,6 +7,8 @@ import java.util.LinkedList;
 
 public class Block extends Entity {
     public LinkedList<Inst> insts = new LinkedList<>();
+    public LinkedList<PhiInst> phiInsts = new LinkedList<>();
+
     public boolean terminated = false;
 
     public Function belonging;
@@ -38,6 +40,11 @@ public class Block extends Entity {
             }
         }
         insts.add(allocaInst);
+    }
+
+    @Override
+    public String nameWithType() {
+        return type + " %" + name;
     }
 
     public void accept(IRVisitor visitor) {

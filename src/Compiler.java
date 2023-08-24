@@ -16,17 +16,16 @@ import src.utils.error.MxErrorListener;
 import src.utils.scope.GlobalScope;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 
 public class Compiler {
     public static void main(String[] args) throws Exception {
         InputStream input = System.in;
-        boolean online = false;
+        boolean online = true;
 
         if (!online) { //local
-            input = new FileInputStream("src/input.mx");
+            input = new FileInputStream("input.mx");
         }
 
         try {
@@ -59,10 +58,11 @@ public class Compiler {
 
         IRBuilder irBuilder = new IRBuilder(globalScope);
         irBuilder.visit(ASTRoot);
-        var outFile = new FileOutputStream("ir.ll");
-        var out = new PrintStream(outFile);
+//        var outFile = new FileOutputStream("ir.ll");
+//        var out = new PrintStream(outFile);
+        var out = new PrintStream(System.out);
         var irPrinter = new IRPrinter(out, globalScope);
         irPrinter.print();
-        outFile.close();
+//        outFile.close();
     }
 }

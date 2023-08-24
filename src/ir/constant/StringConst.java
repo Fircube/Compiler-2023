@@ -16,9 +16,11 @@ public class StringConst extends Const {
     }
 
     public String output() {
-        return value.replace("\0", "\\00")
+        return value.replace("\\", "\\5C").
+                replace("\0", "\\00")
                 .replace("\n", "\\0A")
                 .replace("\t", "\\09")
                 .replace("\"", "\\22");
+
     }
 }

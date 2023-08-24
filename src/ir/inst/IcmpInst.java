@@ -18,7 +18,16 @@ public class IcmpInst extends Inst {
 
     @Override
     public String toString() {
-        return "%s = icmp %s %s, %s".formatted(name(), op, lhs.nameWithType(), rhs.nameWithType());
+        String order = switch (op) {
+            case ">" -> "sgt";
+            case "<" -> "slt";
+            case ">=" -> "sge";
+            case "<=" -> "sle";
+            case "!=" -> "ne";
+            case "==" -> "eq";
+            default -> null;
+        };
+        return "%s = icmp %s %s, %s".formatted(name(), order, lhs.nameWithType(), rhs.name());
     }
 
     @Override

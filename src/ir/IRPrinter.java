@@ -1,17 +1,11 @@
 package src.ir;
 
-import src.ast.ASTVisitor;
-import src.ast.exprNode.*;
-import src.ast.rootNode.*;
-import src.ast.stmtNode.*;
 import src.ir.type.*;
 import src.utils.scope.*;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.HashMap;
 
-public class IRPrinter{
+public class IRPrinter {
     public PrintStream os;
 
     public GlobalScope globalScope;
@@ -24,7 +18,7 @@ public class IRPrinter{
     public void print() {
         for (String key : globalScope.buildinFunc.keySet()) {
             Function func = globalScope.buildinFunc.get(key);
-            FuncType funcType = (FuncType)func.type;
+            FuncType funcType = (FuncType) func.type;
             String s = "";
             if (!funcType.paramTypes.isEmpty()) {
                 for (int i = 0; i < funcType.paramTypes.size() - 1; ++i) {
@@ -72,6 +66,9 @@ public class IRPrinter{
             os.printf("define %s %s(%s) {\n", funcType.retType, func.name, s);
             for (var i : func.blocks) {
                 os.printf("%s:\n", i.name);
+                for (var j : i.phiInsts) {
+                    os.println("  " + j);
+                }
                 for (var j : i.insts) {
                     os.println("  " + j);
                 }

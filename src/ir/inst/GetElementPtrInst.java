@@ -14,17 +14,17 @@ public class GetElementPtrInst extends Inst {
     public ArrayList<Entity> indexList = new ArrayList<>();
 
     public GetElementPtrInst(BaseType retType, String name, Block belonging, Entity ptr, Entity... idx) {
-        super(retType, name,belonging);
+        super(retType, name, belonging);
         this.ptr = ptr;
         indexList.addAll(Arrays.asList(idx));
     }
 
     @Override
     public String toString() {
-        StringBuilder s= new StringBuilder(new StringBuilder("%s = getelementptr inbounds %s, %s, ".formatted(name(), ((PtrType) type).baseType, ptr.nameWithType())));
-        if(!indexList.isEmpty()){
+        StringBuilder s = new StringBuilder(new StringBuilder("%s = getelementptr inbounds %s, %s, ".formatted(name(), ((PtrType) ptr.type).baseType, ptr.nameWithType())));
+        if (!indexList.isEmpty()) {
             s.append(indexList.get(0).nameWithType());
-            for(int i=1;i<indexList.size();++i){
+            for (int i = 1; i < indexList.size(); ++i) {
                 s.append(", ");
                 s.append(indexList.get(i).nameWithType());
             }
