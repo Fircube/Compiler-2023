@@ -10,7 +10,7 @@ public class IcmpInst extends Inst {
     public Entity lhs, rhs;
 
     public IcmpInst(String op, Entity lhs, Entity rhs, String name, Block belonging) {
-        super(new IntType(1), name,belonging);
+        super(new IntType(1), name, belonging);
         this.op = op;
         this.lhs = lhs;
         this.rhs = rhs;

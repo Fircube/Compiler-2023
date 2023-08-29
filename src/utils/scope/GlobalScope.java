@@ -1,29 +1,40 @@
 package src.utils.scope;
 
+import src.asm.ASMFunction;
+import src.asm.operand.GlobalStr;
+import src.asm.operand.GlobalVar;
 import src.ast.rootNode.FuncDefNode;
 import src.ast.rootNode.ParamNode;
 import src.ast.rootNode.TypeNode;
 import src.ast.rootNode.UnitParamNode;
 import src.ir.Entity;
 import src.ir.Function;
-import src.ir.constant.GlobalVar;
+import src.ir.constant.GlobalVariable;
+import src.ir.constant.StringConst;
 import src.ir.type.*;
 import src.utils.Position;
 import src.utils.error.SemanticError;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
 public class GlobalScope extends Scope {
     public HashMap<String, ClassScope> classes = new HashMap<>();
 
-    public HashMap<String, GlobalVar> globalVars = new HashMap<>();
+    public HashMap<String, GlobalVariable> globalVars = new HashMap<>();
     public HashMap<String, ClassType> classTypes = new HashMap<>();
     public HashMap<String, Function> functions = new HashMap<>();
     public HashMap<String, Function> buildinFunc = new HashMap<>();
+    public HashMap<String, StringConst> stringConst = new HashMap<>();
+
+    public ArrayList<GlobalVar> gVars = new ArrayList<>();
+    public ArrayList<GlobalStr> gStrs = new ArrayList<>();
+    public ArrayList<ASMFunction> funcs = new ArrayList<>();
 
 
-    public HashMap<String, Entity> entities = new HashMap<>();
+
+
 
 
     public GlobalScope() {

@@ -3,30 +3,30 @@ package src.ir;
 import src.ir.inst.*;
 
 public interface IRVisitor {
-    public void visit(Function func);
+    void visit(Function func);
 
-    public void visit(Block func);
+    void visit(Block func);
 
 
-    public void visit(AllocaInst inst);
+    void visit(AllocaInst inst);
 
-    public void visit(BinaryInst inst);
+    void visit(BinaryInst inst);
 
-    public void visit(BitCastInst inst);
+    void visit(BitCastInst inst);
 
-    public void visit(BrInst inst);
+    void visit(BrInst inst);
 
-    public void visit(CallInst inst);
+    void visit(CallInst inst);
 
-    public void visit(GetElementPtrInst inst);
+    void visit(GetElementPtrInst inst);
 
-    public void visit(IcmpInst inst);
+    void visit(IcmpInst inst);
 
-    public void visit(LoadInst inst);
+    void visit(LoadInst inst);
 
-    public void visit(PhiInst inst);
+    void visit(PhiInst inst);
 
-    public void visit(RetInst inst);
+    void visit(RetInst inst);
 
-    public void visit(StoreInst inst);
+    void visit(StoreInst inst);
 }

@@ -14,15 +14,14 @@ public class Function extends Const {
     public Inst exit;
     public boolean isMember;
 
-//    public String className;
-
     public Function(FuncType type, String name, boolean isMember) {
         super(type, name);
         this.isMember = isMember;
-//        this.className=className;
     }
 
-    public void addParams(Entity param){params.add(param);}
+    public void addParams(Entity param) {
+        params.add(param);
+    }
 
     public void accept(IRVisitor visitor) {
         visitor.visit(this);

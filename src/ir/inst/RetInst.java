@@ -9,11 +9,11 @@ public class RetInst extends Inst {
     public Entity value;
 
     public RetInst(Block belonging) {
-        super(new VoidType(), "ret",belonging);
+        super(new VoidType(), "ret", belonging);
     }
 
     public RetInst(Entity value, Block belonging) {
-        super(value.type, "ret",belonging);
+        super(value.type, "ret", belonging);
         this.value = value;
     }
 

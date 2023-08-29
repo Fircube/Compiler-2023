@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 public class BlockNode extends StmtNode {
     public ArrayList<StmtNode> stmts = new ArrayList<>();
+
     public BlockNode(Position pos) {
         super(pos);
     }
@@ -15,5 +16,4 @@ public class BlockNode extends StmtNode {
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);
     }
-
 }

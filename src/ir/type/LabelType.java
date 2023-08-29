@@ -1,7 +1,7 @@
 package src.ir.type;
 
-public class LabelType extends BaseType{
-    public LabelType(){
+public class LabelType extends BaseType {
+    public LabelType() {
         super(0);
     }
 

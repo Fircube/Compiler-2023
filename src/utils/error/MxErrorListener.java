@@ -7,12 +7,7 @@ import src.utils.Position;
 
 public class MxErrorListener extends BaseErrorListener {
     @Override
-    public void syntaxError(Recognizer<?, ?> recognizer,
-                            Object offendingSymbol,
-                            int line, int charPositionInLine,
-                            String msg,
-                            RecognitionException e) {
-
+    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
         throw new SyntaxError(new Position(line, charPositionInLine), msg);
     }
 }

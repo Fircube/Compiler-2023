@@ -1,7 +1,5 @@
 package src.ir.type;
 
-import jdk.jfr.Percentage;
-
 public class IntType extends BaseType {
     public int bitLen;
 

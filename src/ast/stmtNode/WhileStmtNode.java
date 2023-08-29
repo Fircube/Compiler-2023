@@ -8,8 +8,6 @@ public class WhileStmtNode extends StmtNode {
     public ExprNode condition;
     public StmtNode body;
 
-    // public loopScope scope;
-
     public WhileStmtNode(ExprNode condition, StmtNode body, Position pos) {
         super(pos);
         this.condition = condition;

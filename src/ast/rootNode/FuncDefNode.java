@@ -12,8 +12,6 @@ public class FuncDefNode extends ASTNode {
     public ParamNode parameters;
     public BlockNode suite;
 
-    // public funcScope scope;
-
     public FuncDefNode(TypeNode returnType, String funcName, ParamNode parameters, BlockNode suite, Position pos) {
         super(pos);
         this.returnType = returnType;

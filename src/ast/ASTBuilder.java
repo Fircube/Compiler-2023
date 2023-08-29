@@ -59,7 +59,7 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
                 if (!con.className.equals(newClass.className)) {
                     throw new SemanticError(new Position(i), "The constructor name does not match the class name.");
                 }
-                newClass.con=con;
+                newClass.con = con;
             }
         }
         for (var i : ctx.funcDef()) {

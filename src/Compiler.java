@@ -3,6 +3,8 @@ package src;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import src.asm.ASMPrinter;
+import src.asm.InstSelection;
 import src.ast.ASTBuilder;
 import src.ast.rootNode.ProgramNode;
 import src.frontend.SemanticChecker;
@@ -16,13 +18,14 @@ import src.utils.error.MxErrorListener;
 import src.utils.scope.GlobalScope;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 
 public class Compiler {
     public static void main(String[] args) throws Exception {
         InputStream input = System.in;
-        boolean online = true;
+        boolean online = false;
 
         if (!online) { //local
             input = new FileInputStream("input.mx");
@@ -60,9 +63,16 @@ public class Compiler {
         irBuilder.visit(ASTRoot);
 //        var outFile = new FileOutputStream("ir.ll");
 //        var out = new PrintStream(outFile);
-        var out = new PrintStream(System.out);
-        var irPrinter = new IRPrinter(out, globalScope);
-        irPrinter.print();
+//        var out = new PrintStream(System.out);
+//        var irPrinter = new IRPrinter(out, globalScope);
+//        irPrinter.print();
 //        outFile.close();
+
+        new InstSelection(globalScope);
+        var asmOutFile = new FileOutputStream("ir.ll");
+        var asmOut = new PrintStream(asmOutFile);
+        var asmPrinter = new ASMPrinter(asmOut, globalScope);
+        asmPrinter.print();
+        asmOutFile.close();
     }
 }

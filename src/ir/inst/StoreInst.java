@@ -6,8 +6,8 @@ import src.ir.IRVisitor;
 import src.ir.type.PtrType;
 
 public class StoreInst extends Inst {
-    Entity value;
-    Entity ptr;
+    public Entity value;
+    public Entity ptr;
 
     public StoreInst(Entity value, Entity ptr, Block belonging) {
         super(((PtrType) ptr.type).baseType, "store", belonging);

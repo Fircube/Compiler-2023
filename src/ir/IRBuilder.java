@@ -73,7 +73,7 @@ public class IRBuilder implements ASTVisitor {
             if (i instanceof VarDefNode vars) {
                 for (var j : vars.defs) {
                     j.type.accept(this);
-                    globalScope.globalVars.put(j.name, new GlobalVar(j.type.irType, rename("@" + j.name)));
+                    globalScope.globalVars.put(j.name, new GlobalVariable(j.type.irType, rename("@" + j.name)));
                 }
             }
             // declare global function
@@ -102,7 +102,7 @@ public class IRBuilder implements ASTVisitor {
         for (var i : it.defs) {
             if (i instanceof VarDefNode vars) {
                 for (var j : vars.defs) {
-                    GlobalVar v = (GlobalVar) globalScope.getVar(j.name, false);
+                    GlobalVariable v = (GlobalVariable) globalScope.getVar(j.name, false);
                     if (j.expr == null) continue;
                     j.expr.accept(this);
                     if (j.expr.val instanceof Const) v.init = j.expr.val;
@@ -484,7 +484,7 @@ public class IRBuilder implements ASTVisitor {
             case "+" -> name = "add";
             case "-" -> name = "sub";
             case "*" -> name = "mul";
-            case "/" -> name = "dev";
+            case "/" -> name = "div";
             case "%" -> name = "mod";
             case ">>" -> name = "rshift";
             case "<<" -> name = "lshift";
@@ -544,11 +544,11 @@ public class IRBuilder implements ASTVisitor {
                 case "bool" -> it.val = it.content.equals("true") ? new BoolConst(true) : new BoolConst(false);
                 case "null" -> it.val = new NullConst();
                 case "string" -> {
-                    Entity s;
-                    if (globalScope.entities.containsKey(it.content)) s = globalScope.entities.get(it.content);
+                    StringConst s;
+                    if (globalScope.stringConst.containsKey(it.content)) s = globalScope.stringConst.get(it.content);
                     else {
                         s = new StringConst(rename("@str"), toStr(it.content));
-                        globalScope.entities.put(it.content, s);
+                        globalScope.stringConst.put(it.content, s);
                     }
                     it.val = new GetElementPtrInst(new PtrType(new IntType(8)), tempName(), curBlock, s, new IntConst(0), new IntConst(0));
                 }
@@ -566,19 +566,7 @@ public class IRBuilder implements ASTVisitor {
             it.val = new LoadInst(rename("%array.size"), sizePtr, curBlock);
         } else if (it.className.type.isString()) {
             Function function = globalScope.getFunction("_str_" + ((IdentifierNode) ((FuncCallExprNode) it.member).funcName).name);
-            ArrayList<Entity> params = new ArrayList<>();
-            params.add(getValue(it.className));
-            for (int i = 0; i < ((FuncCallExprNode) it.member).realParams.size(); ++i) {
-                var param = ((FuncCallExprNode) it.member).realParams.get(i);
-                param.accept(this);
-                Entity val = getValue(param);
-                val.type = ((FuncType) function.type).paramTypes.get(i + 1);
-                params.add(val);
-            }
-
-            if (((FuncType) function.type).retType instanceof VoidType)
-                it.val = it.member.val = new CallInst(rename("voidCall"), curBlock, function, params);
-            else it.val = it.member.val = new CallInst(tempName(), curBlock, function, params);
+            setFunc(it, function);
         } else {
             String className = it.className.type.typeName;
             ClassScope classScope = globalScope.getClassScope(className);
@@ -586,26 +574,30 @@ public class IRBuilder implements ASTVisitor {
             if (it.member.isFunc) {
                 String funcName = ((IdentifierNode) ((FuncCallExprNode) it.member).funcName).name;
                 Function function = classScope.getFunction(funcName);
-                ArrayList<Entity> params = new ArrayList<>();
-
-                params.add(getValue(it.className));
-
-                for (int i = 0; i < ((FuncCallExprNode) it.member).realParams.size(); ++i) {
-                    var param = ((FuncCallExprNode) it.member).realParams.get(i);
-                    param.accept(this);
-                    Entity val = getValue(param);
-                    val.type = ((FuncType) function.type).paramTypes.get(i + 1);
-                    params.add(val);
-                }
-
-                if (((FuncType) function.type).retType instanceof VoidType)
-                    it.val = it.member.val = new CallInst(rename("voidCall"), curBlock, function, params);
-                else it.val = it.member.val = new CallInst(tempName(), curBlock, function, params);
+                setFunc(it, function);
             } else {
                 Integer index = classScope.getVarIdx(((IdentifierNode) it.member).name);
                 it.ptr = new GetElementPtrInst(new PtrType(classType.memberTypes.get(index)), rename("%" + ((IdentifierNode) it.member).name), curBlock, getValue(it.className), new IntConst(0), new IntConst(index));
             }
         }
+    }
+
+    private void setFunc(MemberExprNode it, Function function) {
+        ArrayList<Entity> params = new ArrayList<>();
+
+        params.add(getValue(it.className));
+
+        for (int i = 0; i < ((FuncCallExprNode) it.member).realParams.size(); ++i) {
+            var param = ((FuncCallExprNode) it.member).realParams.get(i);
+            param.accept(this);
+            Entity val = getValue(param);
+            val.type = ((FuncType) function.type).paramTypes.get(i + 1);
+            params.add(val);
+        }
+
+        if (((FuncType) function.type).retType instanceof VoidType)
+            it.val = it.member.val = new CallInst(rename("voidCall"), curBlock, function, params);
+        else it.val = it.member.val = new CallInst(tempName(), curBlock, function, params);
     }
 
 

@@ -1,7 +1,5 @@
 package src.ir.constant;
 
-import src.ir.type.IntType;
-
 public class BoolConst extends IntConst {
     public boolean value;
 
@@ -14,5 +12,4 @@ public class BoolConst extends IntConst {
     public String name() {
         return value ? "1" : "0";
     }
-
 }

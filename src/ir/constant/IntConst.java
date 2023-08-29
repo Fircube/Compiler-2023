@@ -19,5 +19,4 @@ public class IntConst extends Const {
     public String name() {
         return String.valueOf(value);
     }
-
 }

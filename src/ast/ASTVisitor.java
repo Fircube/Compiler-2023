@@ -66,5 +66,4 @@ public interface ASTVisitor {
     void visit(TernaryExprNode it);
 
     void visit(UnaryExprNode it);
-
 }

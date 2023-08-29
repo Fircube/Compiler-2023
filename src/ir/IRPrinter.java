@@ -19,12 +19,12 @@ public class IRPrinter {
         for (String key : globalScope.buildinFunc.keySet()) {
             Function func = globalScope.buildinFunc.get(key);
             FuncType funcType = (FuncType) func.type;
-            String s = "";
+            StringBuilder s = new StringBuilder();
             if (!funcType.paramTypes.isEmpty()) {
                 for (int i = 0; i < funcType.paramTypes.size() - 1; ++i) {
-                    s += funcType.paramTypes.get(i) + ", ";
+                    s.append(funcType.paramTypes.get(i)).append(", ");
                 }
-                s += funcType.paramTypes.get(funcType.paramTypes.size() - 1);
+                s.append(funcType.paramTypes.get(funcType.paramTypes.size() - 1));
             }
             os.printf("declare %s %s(%s)\n", funcType.retType, func.name, s);
         }
@@ -32,12 +32,12 @@ public class IRPrinter {
 
         for (String key : globalScope.classTypes.keySet()) {
             ClassType classType = globalScope.classTypes.get(key);
-            String s = "";
+            StringBuilder s = new StringBuilder();
             if (!classType.memberTypes.isEmpty()) {
                 for (int i = 0; i < classType.memberTypes.size() - 1; ++i) {
-                    s += classType.memberTypes.get(i) + ", ";
+                    s.append(classType.memberTypes.get(i)).append(", ");
                 }
-                s += classType.memberTypes.get(classType.memberTypes.size() - 1);
+                s.append(classType.memberTypes.get(classType.memberTypes.size() - 1));
             }
             os.printf("%s = type {%s}\n", classType, s);
         }
@@ -48,20 +48,20 @@ public class IRPrinter {
         }
         os.println();
 
-        for (String key : globalScope.entities.keySet()) {
-            os.println(globalScope.entities.get(key));
+        for (String key : globalScope.stringConst.keySet()) {
+            os.println(globalScope.stringConst.get(key));
         }
         os.println();
 
         for (String key : globalScope.functions.keySet()) {
             Function func = globalScope.functions.get(key);
             FuncType funcType = (FuncType) func.type;
-            String s = "";
+            StringBuilder s = new StringBuilder();
             if (!func.params.isEmpty()) {
                 for (int i = 0; i < func.params.size() - 1; ++i) {
-                    s += func.params.get(i).nameWithType() + ", ";
+                    s.append(func.params.get(i).nameWithType()).append(", ");
                 }
-                s += func.params.get(funcType.paramTypes.size() - 1).nameWithType();
+                s.append(func.params.get(funcType.paramTypes.size() - 1).nameWithType());
             }
             os.printf("define %s %s(%s) {\n", funcType.retType, func.name, s);
             for (var i : func.blocks) {

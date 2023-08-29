@@ -12,13 +12,13 @@ public class BrInst extends Inst {
     public Block falseDest;
 
     public BrInst(Block dest, Block belonging) {
-        super(new VoidType(), "br",belonging);
+        super(new VoidType(), "br", belonging);
         this.isJump = true;
         this.trueDest = dest;
     }
 
-    public BrInst(Entity con, Block trueDest, Block falseDest,Block belonging) {
-        super(new VoidType(), "br",belonging);
+    public BrInst(Entity con, Block trueDest, Block falseDest, Block belonging) {
+        super(new VoidType(), "br", belonging);
         this.isJump = false;
         this.con = con;
         this.trueDest = trueDest;

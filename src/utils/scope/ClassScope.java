@@ -32,7 +32,7 @@ public class ClassScope extends Scope {
     }
 
     public Integer getVarIdx(String name) {
-       return varIndex.get(name);
+        return varIndex.get(name);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class ClassScope extends Scope {
         return funcMembers.get(name);
     }
 
-    public void addFunction(String name,Function func) {
+    public void addFunction(String name, Function func) {
         functions.put(name, func);
     }
 

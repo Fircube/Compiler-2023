@@ -25,10 +25,10 @@ public class PhiInst extends Inst {
     public String toString() {
         StringBuilder s = new StringBuilder("%s = phi %s ".formatted(name, type));
         if (!value.isEmpty()) {
-            s.append("[%s, %s]".formatted(value.get(0).name(), "%"+label.get(0).name()));
+            s.append("[%s, %s]".formatted(value.get(0).name(), "%" + label.get(0).name()));
             for (int i = 1; i < value.size(); ++i) {
                 s.append(", ");
-                s.append("[%s, %s]".formatted(value.get(i).name(), "%"+label.get(i).name()));
+                s.append("[%s, %s]".formatted(value.get(i).name(), "%" + label.get(i).name()));
             }
         }
         return s.toString();

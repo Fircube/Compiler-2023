@@ -9,8 +9,6 @@ public class ForStmtNode extends StmtNode {
     public ExprNode forInit, forCon, forStep;
     public StmtNode body;
 
-    //public loopScope scope
-
     public ForStmtNode(VarDefNode varInit, ExprNode forInit, ExprNode forCon, ExprNode forStep, StmtNode body, Position pos) {
         super(pos);
         this.varInit = varInit;

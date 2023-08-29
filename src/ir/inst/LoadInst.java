@@ -9,7 +9,7 @@ public class LoadInst extends Inst {
     public Entity ptr;
 
     public LoadInst(String name, Entity ptr, Block belonging) {
-        super(((PtrType) ptr.type).baseType, name,belonging);
+        super(((PtrType) ptr.type).baseType, name, belonging);
         this.ptr = ptr;
     }
 
