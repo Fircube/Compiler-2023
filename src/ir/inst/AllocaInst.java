@@ -6,7 +6,7 @@ import src.ir.type.BaseType;
 import src.ir.type.PtrType;
 
 public class AllocaInst extends Inst {
-    BaseType type;
+    public BaseType type;
 
     public AllocaInst(BaseType type, String name, Block belonging) {
         super(new PtrType(type), name, belonging);

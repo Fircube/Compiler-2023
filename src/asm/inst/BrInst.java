@@ -7,19 +7,19 @@ import src.asm.operand.Reg;
 //{bgt, ble, bgtu, bleu} rs, rt, offset
 public class BrInst extends Inst{
     public String op;
-    public Reg rs,rt;
+//    public Reg rs,rt;
     public ASMBlock dest;
 
     public BrInst(String op, Reg rs, Reg rt, ASMBlock dest, ASMBlock belonging) {
         super(belonging);
         this.op = op;
-        this.rs = rs;
-        this.rt = rt;
+        this.rs1 = rs;
+        this.rd = rt;
         this.dest = dest;
     }
 
     @Override
     public String toString() {
-        return "%s %s, %s, %s".formatted(op, rs, rt, dest.name);
+        return "%s %s, %s, %s".formatted(op, rs1, rd, dest.name);
     }
 }

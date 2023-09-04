@@ -4,7 +4,7 @@ import src.asm.ASMBlock;
 import src.asm.operand.*;
 
 public class LuiInst extends Inst{
-    public Reg rd;
+//    public Reg rd;
     public Imm imm;
 
     public LuiInst(Reg rd, Imm imm, ASMBlock belonging) {

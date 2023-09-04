@@ -18,6 +18,7 @@ import java.util.HashMap;
 public class IRBuilder implements ASTVisitor {
     private final GlobalScope globalScope;
 
+    private int phiCnt = 1;
     private Scope curScope;
     private Block curBlock;
     private Function curFunc;
@@ -28,9 +29,7 @@ public class IRBuilder implements ASTVisitor {
 
 
     public IRBuilder(GlobalScope globalScope) {
-        this.globalScope = globalScope;
-        this.globalScope.initIR();
-        this.curScope = this.globalScope;
+        this.curScope = this.globalScope = globalScope;
     }
 
     @Override
@@ -711,17 +710,18 @@ public class IRBuilder implements ASTVisitor {
         curBlock = trueBlock;
         it.trueExpr.accept(this);
         trueSource = curBlock;
-        new BrInst(endBlock, curBlock);
+        new BrInst(phiCnt, endBlock, curBlock);
         curBlock = falseBlock;
         it.falseExpr.accept(this);
         falseSource = curBlock;
-        new BrInst(endBlock, curBlock);
+        new BrInst(phiCnt, endBlock, curBlock);
         curBlock = endBlock;
         if (it.trueExpr.val != null || it.trueExpr.ptr != null) {
             if (!(getValue(it.trueExpr).type instanceof VoidType)) {
-                it.val = new PhiInst(getValue(it.trueExpr).type, rename("%ter.result"), curBlock);
+                it.val = new PhiInst(phiCnt, getValue(it.trueExpr).type, rename("%ter.result"), curBlock);
                 ((PhiInst) it.val).addBranch(getValue(it.trueExpr), trueSource);
                 ((PhiInst) it.val).addBranch(getValue(it.falseExpr), falseSource);
+                phiCnt++;
             }
         }
     }

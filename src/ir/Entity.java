@@ -16,11 +16,6 @@ public class Entity {
         this.name = name;
     }
 
-    public Integer getConst() {
-        if (this instanceof IntConst) return ((IntConst) this).value;
-        else if(this instanceof NullConst) return 0;
-        return null;
-    }
     public String name() {
         return name;
     }

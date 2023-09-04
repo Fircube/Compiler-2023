@@ -7,21 +7,21 @@ import src.asm.operand.*;
 // l{b, h, w} rd, symbol
 public class LoadInst extends Inst {
     public int size;
-    public Reg rd, rs;
+//    public Reg rd, rs;
     public Imm offset;
 
     public LoadInst(int size, Reg rd, Reg rs, Imm offset, ASMBlock belonging) {
         super(belonging);
         this.size = size;
         this.rd = rd;
-        this.rs = rs;
+        this.rs1 = rs;
         this.offset = offset;
     }
 
     @Override
     public String toString() {
-        if (size == 1) return "lb %s, %s(%s)".formatted(rd, offset, rs);
-        else return "lw %s, %s(%s)".formatted(rd, offset, rs);
+        if (size == 1) return "lb %s, %s(%s)".formatted(rd, offset, rs1);
+        else return "lw %s, %s(%s)".formatted(rd, offset, rs1);
     }
 
 }

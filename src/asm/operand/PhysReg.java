@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 public class PhysReg extends Reg {
     public String name;
+    public int size = 4;
     public static HashSet<PhysReg> callerSaved = new HashSet<>();
     public static HashSet<PhysReg> calleeSaved = new HashSet<>();
     public static HashMap<String, PhysReg> regMap = new HashMap<>() {
@@ -16,10 +17,11 @@ public class PhysReg extends Reg {
             reg = new PhysReg("sp");
             put("sp", reg);
             calleeSaved.add(reg);
-//            for (int i = 0; i < 7; ++i) {
-//                var reg = new PhysReg("t" + i);
-//                put("t" + i, reg);
-//            }
+            for (int i = 0; i < 7; ++i) {
+                reg = new PhysReg("t" + i);
+                put("t" + i, reg);
+                callerSaved.add(reg);
+            }
             for (int i = 0; i < 8; ++i) {
                 reg = new PhysReg("a" + i);
                 put("a" + i, reg);
