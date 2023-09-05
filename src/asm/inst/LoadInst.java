@@ -7,7 +7,6 @@ import src.asm.operand.*;
 // l{b, h, w} rd, symbol
 public class LoadInst extends Inst {
     public int size;
-//    public Reg rd, rs;
     public Imm offset;
 
     public LoadInst(int size, Reg rd, Reg rs, Imm offset, ASMBlock belonging) {
@@ -23,5 +22,4 @@ public class LoadInst extends Inst {
         if (size == 1) return "lb %s, %s(%s)".formatted(rd, offset, rs1);
         else return "lw %s, %s(%s)".formatted(rd, offset, rs1);
     }
-
 }

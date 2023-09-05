@@ -9,14 +9,13 @@ public class VirtReg extends Reg {
         this.offset = offset;
     }
 
-    public VirtReg(int size,int offset) {
+    public VirtReg(int size, int offset) {
         this.size = size;
-        this.offset=offset;
+        this.offset = offset;
     }
 
     @Override
     public String toString() {
         return offset + "(fp)";
     }
-
 }
