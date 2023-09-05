@@ -20,7 +20,6 @@ import src.utils.Position;
 import src.utils.error.IRError;
 import src.utils.scope.GlobalScope;
 
-import java.util.HashMap;
 import java.util.Objects;
 
 public class InstSelection implements IRVisitor {
@@ -59,8 +58,8 @@ public class InstSelection implements IRVisitor {
         }
 
         // init functions
-        for (String key : globalScope.buildinFunc.keySet()) {
-            Function buildinFunc = globalScope.buildinFunc.get(key);
+        for (String key : globalScope.builtinFunc.keySet()) {
+            Function buildinFunc = globalScope.builtinFunc.get(key);
             buildinFunc.operand = new ASMFunction(buildinFunc.name.substring(1));
         }
         for (String key : globalScope.functions.keySet()) {
@@ -108,17 +107,38 @@ public class InstSelection implements IRVisitor {
         for (var block : func.blocks) {
             block.accept(this);
         }
+        for (var block : func.blocks) {
+            curBlock = (ASMBlock) block.operand;
+            for (int i = 0; i < block.phiInsts.size(); i++) {
+                var inst = block.phiInsts.get(i);
+                inst.accept(this);
+            }
+        }
+        curBlock=null;
 //        if (isValue(curFunc.stackSpace)) {
+        curFunc.stackSpace = curFunc.paramSpace + curFunc.allocaSpace;
+        curFunc.stackSpace = ((curFunc.stackSpace + 15) >> 4) << 4;
+
         curFunc.entryBlock.insts.addFirst(new IBinaryInst("addi", fp, sp, new Imm(curFunc.stackSpace), null));
         curFunc.entryBlock.insts.addFirst(new StoreInst(4, fp, sp, new Imm(curFunc.stackSpace - 8), null));
         curFunc.entryBlock.insts.addFirst(new StoreInst(4, ra, sp, new Imm(curFunc.stackSpace - 4), null));
         curFunc.entryBlock.insts.addFirst(new IBinaryInst("addi", sp, sp, new Imm(-curFunc.stackSpace), null));
+
+        for (var block : func.blocks) {
+            for (var inst : block.insts) {
+                if (inst instanceof src.ir.inst.RetInst) {
+                    new LoadInst(4, ra, sp, new Imm(curFunc.stackSpace - 4), (ASMBlock) block.operand);
+                    new LoadInst(4, fp, sp, new Imm(curFunc.stackSpace - 8), (ASMBlock) block.operand);
+                    new IBinaryInst("addi", sp, sp, new Imm(curFunc.stackSpace), (ASMBlock) block.operand);
+                    new RetInst((ASMBlock) block.operand);
+                }
+            }
+        }
 //        } else {
 //            VirtReg reg = new VirtReg();
 //            curFunc.entryBlock.insts.addFirst(new LiInst(reg, new Imm(-curFunc.stackSpace), null));
 //            curFunc.entryBlock.insts.addFirst(new RBinaryInst("add", sp, sp, reg, null));
 //    }
-
         curFunc = null;
     }
 
@@ -342,21 +362,50 @@ public class InstSelection implements IRVisitor {
         if (inst.ptr instanceof Const c) { // global variable and string
             new LuiInst(t1, new Relocation("hi", (Global) c.operand), curBlock);
             new LoadInst(((PtrType) inst.ptr.type).baseType.size, t0, t1, new Relocation("lo", (Global) c.operand), curBlock);
+            storeReg(t0, inst);
         } else {
 //            if (inst.ptr.operand instanceof Imm i) {
 //                int value = i.value;
 //                new LiInst(t0, new Imm(value), curBlock);
 //            } else {
-                loadReg(t1, inst.ptr);
-                new LoadInst(((PtrType) inst.ptr.type).baseType.size, t0, t1, new Imm(0), curBlock);
+            t1.size = 4;
+            Pair<Reg, Imm> pair = getPtrAddr(t1, inst.ptr);
+            setRegSize(t0, inst);
+            new LoadInst(t0.size, t0, pair.a, pair.b, curBlock);
+//            loadReg(t1, inst.ptr);
+//            new LoadInst(((PtrType) inst.ptr.type).baseType.size, t0, t1, new Imm(0), curBlock);
+            storeReg(t0, inst);
 //            }
         }
-        storeReg(t0, inst);
     }
 
     @Override
     public void visit(PhiInst inst) {
-        setRegSize(a0, inst);
+        ASMBlock tmpBlock = curBlock;
+        ASMBlock block1 = (ASMBlock) inst.label.get(0).operand;
+        ASMBlock newBlock1 = new ASMBlock(".LphiTrueSource." + inst.idx);
+        ASMBlock block2 = (ASMBlock) inst.label.get(1).operand;
+        ASMBlock newBlock2 = new ASMBlock(".LphiFalseSource." + inst.idx);
+
+        block1.insts.removeLast();
+        new JumpInst(newBlock1,block1);
+        curBlock = newBlock1;
+        setRegSize(t0, inst);
+        loadReg(t0,inst.value.get(0));
+        storeReg(t0, inst);
+        new JumpInst(tmpBlock,curBlock);
+        curFunc.blocks.add(newBlock1);
+
+        block2.insts.removeLast();
+        new JumpInst(newBlock2,block2);
+        curBlock = newBlock2;
+        setRegSize(t0, inst);
+        loadReg(t0,inst.value.get(1));
+        storeReg(t0, inst);
+        new JumpInst(tmpBlock,curBlock);
+        curFunc.blocks.add(newBlock2);
+
+        curBlock = tmpBlock;
     }
 
     @Override
@@ -367,8 +416,8 @@ public class InstSelection implements IRVisitor {
         }
 //        new MvInst(ra, curFunc.cacheRa, curBlock);
 
-        curFunc.stackSpace = curFunc.paramSpace + curFunc.allocaSpace;
-        curFunc.stackSpace = ((curFunc.stackSpace + 15) >> 4) << 4;
+//        curFunc.stackSpace = curFunc.paramSpace + curFunc.allocaSpace;
+//        curFunc.stackSpace = ((curFunc.stackSpace + 15) >> 4) << 4;
 
 //        if (isValue(curFunc.stackSpace)) {
 //            new IBinaryInst("addi", sp, sp, new Imm(curFunc.stackSpace), curBlock);
@@ -377,10 +426,10 @@ public class InstSelection implements IRVisitor {
 //            new LiInst(reg, new Imm(curFunc.stackSpace), curBlock);
 //            new RBinaryInst("add", sp, sp, reg, curBlock);
 //        }
-        new LoadInst(4, ra, sp, new Imm(curFunc.stackSpace - 4), curBlock);
-        new LoadInst(4, fp, sp, new Imm(curFunc.stackSpace - 8), curBlock);
-        new IBinaryInst("addi", sp, sp, new Imm(curFunc.stackSpace), curBlock);
-        new RetInst(curBlock);
+//        new LoadInst(4, ra, sp, new Imm(curFunc.stackSpace - 4), curBlock);
+//        new LoadInst(4, fp, sp, new Imm(curFunc.stackSpace - 8), curBlock);
+//        new IBinaryInst("addi", sp, sp, new Imm(curFunc.stackSpace), curBlock);
+//        new RetInst(curBlock);
     }
 
     @Override
@@ -395,10 +444,12 @@ public class InstSelection implements IRVisitor {
 //                new LiInst(t0, new Imm(value), curBlock);
 //                storeReg(t0,inst.ptr);
 //            } else {
-                loadReg(t1, inst.value);
-                new MvInst(t0, t1, curBlock);
-                storeReg(t0,inst.ptr);
-//            }
+            t1.size = 4;
+            Pair<Reg, Imm> pair = getPtrAddr(t1, inst.ptr);
+            setRegSize(t0, inst.value);
+            loadReg(t0, inst.value);
+//            loadReg(t1, inst.ptr);
+            new StoreInst(inst.value.type.size, t0, pair.a, pair.b, curBlock);
         }
     }
 
@@ -427,33 +478,6 @@ public class InstSelection implements IRVisitor {
         }
     }
 
-//    private PhysReg getPhysReg(Entity e, PhysReg tmp) {
-//        Reg reg = getReg(e);
-//        if (reg instanceof PhysReg p) {
-//            return p;
-//        } else {
-//            loadReg(tmp, e);
-//            return tmp;
-//        }
-//    }
-
-//    private Reg getReg(Entity e) {
-//        if (e.operand != null) return (Reg) e.operand;
-//        var constVal = getConst(e);
-//        if (constVal != null) {
-//            if (constVal == 0) {
-//                e.operand = PhysReg.regMap.get("zero");
-//            } else {
-//                VirtReg reg = newVirtReg(e.type.size);
-//                new LiInst(reg, new Imm(constVal), curBlock);
-//                return reg;
-//            }
-//        } else {
-//            e.operand = newVirtReg(e.type.size);
-//        }
-//        return (Reg) e.operand;
-//    }
-
     private void loadReg(PhysReg rd, Entity entity) {
         Integer val = getConst(entity);
         if (val != null) new LiInst(rd, new Imm(val), curBlock);
@@ -464,7 +488,7 @@ public class InstSelection implements IRVisitor {
             } else if (entity.operand instanceof Global g) {
                 new LuiInst(t1, new Relocation("hi", g), curBlock);
                 new IBinaryInst("addi", t0, t1, new Relocation("lo", g), curBlock);
-                new LoadInst(((PtrType)entity.type).baseType.size,rd,t0,new Imm(0),curBlock);
+                new LoadInst(((PtrType) entity.type).baseType.size, rd, t0, new Imm(0), curBlock);
             } else {
                 loadVirtReg(rd, (VirtReg) entity.operand);
             }
@@ -507,5 +531,23 @@ public class InstSelection implements IRVisitor {
         new LiInst(t4, new Imm(reg.offset), curBlock);
         new RBinaryInst("sub", t3, fp, t4, curBlock);
         return new Pair<>(t3, new Imm(0));
+    }
+
+    private Pair<Reg, Imm> getPtrAddr(PhysReg reg, Entity entity) {
+        reg.size = 4;
+        if (entity.operand instanceof Global g) {
+            new LuiInst(t1, new Relocation("hi", g), curBlock);
+            new IBinaryInst("addi", reg, t1, new Relocation("lo", g), curBlock);
+            return new Pair<>(reg, new Imm(0));
+        }
+        if (entity instanceof AllocaInst a) {
+            if (a.operand != null) return getAddr((VirtReg) a.operand);
+            else {
+                a.operand = newVirtReg(((PtrType) a.type).baseType.size);
+                return getAddr((VirtReg) a.operand);
+            }
+        }
+        loadReg(reg, entity);
+        return new Pair<>(reg, new Imm(0));
     }
 }

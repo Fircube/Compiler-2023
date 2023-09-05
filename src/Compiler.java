@@ -10,6 +10,7 @@ import src.ast.rootNode.ProgramNode;
 import src.frontend.SemanticChecker;
 import src.frontend.SymbolCollector;
 import src.ir.IRBuilder;
+import src.ir.IRPrinter;
 import src.parser.MxLexer;
 import src.parser.MxParser;
 import src.utils.error.MxError;
@@ -60,12 +61,12 @@ public class Compiler {
         globalScope.initIR();
         IRBuilder irBuilder = new IRBuilder(globalScope);
         irBuilder.visit(ASTRoot);
-//        var outFile = new FileOutputStream("ir.ll");
-//        var out = new PrintStream(outFile);
+        var outFile = new FileOutputStream("ir.ll");
+        var out = new PrintStream(outFile);
 //        var out = new PrintStream(System.out);
-//        var irPrinter = new IRPrinter(out, globalScope);
-//        irPrinter.print();
-//        outFile.close();
+        var irPrinter = new IRPrinter(out, globalScope);
+        irPrinter.print();
+        outFile.close();
 
         new InstSelection(globalScope);
 //        var regAlloca = new RegAlloca(globalScope);

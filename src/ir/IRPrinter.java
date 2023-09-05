@@ -16,8 +16,8 @@ public class IRPrinter {
     }
 
     public void print() {
-        for (String key : globalScope.buildinFunc.keySet()) {
-            Function func = globalScope.buildinFunc.get(key);
+        for (String key : globalScope.builtinFunc.keySet()) {
+            Function func = globalScope.builtinFunc.get(key);
             FuncType funcType = (FuncType) func.type;
             StringBuilder s = new StringBuilder();
             if (!funcType.paramTypes.isEmpty()) {

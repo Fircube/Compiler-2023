@@ -25,7 +25,7 @@ public class GlobalScope extends Scope {
     public HashMap<String, GlobalVariable> globalVars = new HashMap<>();
     public HashMap<String, ClassType> classTypes = new HashMap<>();
     public HashMap<String, Function> functions = new HashMap<>();
-    public HashMap<String, Function> buildinFunc = new HashMap<>();
+    public HashMap<String, Function> builtinFunc = new HashMap<>();
     public HashMap<String, StringConst> stringConst = new HashMap<>();
 
     public ArrayList<GlobalVar> gVars = new ArrayList<>();
@@ -110,7 +110,7 @@ public class GlobalScope extends Scope {
         FuncType funcType = new FuncType(returnType);
         funcType.paramTypes.addAll(Arrays.asList(paramTypes));
         Function function = new Function(funcType, "@" + funcName, isMember);
-        this.buildinFunc.put(funcName, function);
+        this.builtinFunc.put(funcName, function);
     }
 
     public void addClassDef(ClassScope classScope, Position pos) {
@@ -166,7 +166,7 @@ public class GlobalScope extends Scope {
 
     public Function getFunction(String name) {
         if (functions.containsKey(name)) return functions.get(name);
-        return buildinFunc.get(name);
+        return builtinFunc.get(name);
     }
 
 }

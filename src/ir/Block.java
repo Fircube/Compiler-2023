@@ -12,7 +12,7 @@ public class Block extends Entity {
     public boolean terminated = false;
 
 
-    public Block(String name,Function belonging) {
+    public Block(String name, Function belonging) {
         super(new LabelType(), name);
         if (belonging != null) {
             belonging.blocks.add(this);

@@ -144,7 +144,7 @@ public class IRBuilder implements ASTVisitor {
         PtrType thisPtr = new PtrType(curClsType);
         Entity value = new Entity(thisPtr, rename("%this"));
         curFunc.addParams(value);
-        AllocaInst ptr = new AllocaInst(thisPtr, rename("%this.addr"), curBlock);
+        AllocaInst ptr = new AllocaInst(thisPtr, rename("%this.addr"), curFunc.entryBlock);
         curScope.addVars("this", ptr);
         new StoreInst(value, ptr, curBlock);
     }
@@ -187,7 +187,7 @@ public class IRBuilder implements ASTVisitor {
         if (funcType.retType instanceof VoidType) {
             curFunc.exit = new RetInst(null);
         } else {
-            curFunc.retValPtr = new AllocaInst(funcType.retType, rename("%retval.addr"), curBlock);
+            curFunc.retValPtr = new AllocaInst(funcType.retType, rename("%retval.addr"), curFunc.entryBlock);
             curScope.addVars("retval", (AllocaInst) curFunc.retValPtr);
             curFunc.exit = new RetInst(new LoadInst(rename("%retval"), curFunc.retValPtr, null), null);
         }
@@ -201,7 +201,7 @@ public class IRBuilder implements ASTVisitor {
             BaseType type = funcType.paramTypes.get(i + idx);
             Entity value = new Entity(type, rename("%" + param.paramName));
             curFunc.addParams(value);
-            AllocaInst ptr = new AllocaInst(type, rename("%" + param.paramName + ".addr"), curBlock);
+            AllocaInst ptr = new AllocaInst(type, rename("%" + param.paramName + ".addr"), curFunc.entryBlock);
             curScope.addVars(param.paramName, ptr);
             new StoreInst(value, ptr, curBlock);
         }
@@ -325,7 +325,7 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(UnitVarDefNode it) {
         it.type.accept(this);
-        var ptr = new AllocaInst(it.type.irType, rename("%" + it.name + ".addr"), curBlock);
+        var ptr = new AllocaInst(it.type.irType, rename("%" + it.name + ".addr"), curFunc.entryBlock);
         if (it.expr != null) {
             it.expr.accept(this);
             new StoreInst(getValue(it.expr), ptr, curBlock);
@@ -380,7 +380,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(BinaryExprNode it) {
         it.lhs.accept(this);
         if (it.op.equals("&&")) {
-            if (getValue(it.lhs) instanceof IntConst b) {
+            if (it.lhs.val !=null && it.lhs.val instanceof IntConst b) {
                 if (b.value == 0) {
                     it.val = new BoolConst(false);
                 } else {
@@ -389,7 +389,7 @@ public class IRBuilder implements ASTVisitor {
                 }
                 return;
             }
-            it.ptr = new AllocaInst(new IntType(1), rename("%and.result.addr"), curBlock);
+            it.ptr = new AllocaInst(new IntType(1), rename("%and.result.addr"), curFunc.entryBlock);
             curScope.addVars("ans.result", (AllocaInst) it.ptr);
             Block rhsBlock = new Block(rename("and.rhs"), curFunc);
             Block skipBlock = new Block(rename("and.skip"), curFunc);
@@ -408,7 +408,7 @@ public class IRBuilder implements ASTVisitor {
             curBlock = endBlock;
             return;
         } else if (it.op.equals("||")) {
-            if (getValue(it.lhs) instanceof IntConst b) {
+            if (it.lhs.val !=null && it.lhs.val instanceof IntConst b) {
                 if (b.value == 0) {
                     it.rhs.accept(this);
                     it.val = it.rhs.val;
@@ -417,7 +417,7 @@ public class IRBuilder implements ASTVisitor {
                 }
                 return;
             }
-            it.ptr = new AllocaInst(new IntType(1), rename("%or.result.addr"), curBlock);
+            it.ptr = new AllocaInst(new IntType(1), rename("%or.result.addr"), curFunc.entryBlock);
             curScope.addVars("or.result", (AllocaInst) it.ptr);
             Block rhsBlock = new Block(rename("or.rhs"), curFunc);
             Block skipBlock = new Block(rename("or.skip"), curFunc);
@@ -639,7 +639,7 @@ public class IRBuilder implements ASTVisitor {
         var arrPtr = new BitCastInst(rename("%new.arrptr"), type, tmpPtr, curBlock);
 
         if (idx + 1 < sizes.size()) {
-            var ptr = new AllocaInst(type, rename("%new.ptr"), curBlock);
+            var ptr = new AllocaInst(type, rename("%new.ptr"), curFunc.entryBlock);
             new StoreInst(arrPtr, ptr, curBlock);
 
             var endPtr = new GetElementPtrInst(type, rename("%new.endPtr"), curBlock, arrPtr, num);
