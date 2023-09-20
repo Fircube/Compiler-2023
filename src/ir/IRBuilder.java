@@ -442,8 +442,11 @@ public class IRBuilder implements ASTVisitor {
             return;
         }
         if (it.lhs.val instanceof IntConst l && it.rhs.val instanceof IntConst r) {
-            if ((it.op.equals("/") || it.op.equals("%")) && r.value == 0)
-                throw new IRError(it.pos, "The divisor cannot be 0");
+            if ((it.op.equals("/") || it.op.equals("%")) && r.value == 0){
+                it.val = new NullConst();
+                return;
+            }
+//                throw new IRError(it.pos, "The divisor cannot be 0");
             switch (it.op) {
                 case "+" -> it.val = new IntConst(l.value + r.value);
                 case "-" -> it.val = new IntConst(l.value - r.value);
