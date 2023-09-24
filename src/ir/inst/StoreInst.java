@@ -10,6 +10,7 @@ public class StoreInst extends Inst {
     public Entity ptr;
 
     public StoreInst(Entity value, Entity ptr, Block belonging) {
+        // value can be null
         super(((PtrType) ptr.type).baseType, "store", belonging);
         this.value = value;
         this.ptr = ptr;

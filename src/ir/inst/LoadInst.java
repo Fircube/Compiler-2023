@@ -16,7 +16,6 @@ public class LoadInst extends Inst {
     @Override
     public String toString() {
         return "%s = load %s, %s, align %d".formatted(this.name(), this.type, ptr.nameWithType(), ptr.type.size);
-
     }
 
     @Override

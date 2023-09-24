@@ -1,15 +1,18 @@
 package src.ir;
 
 import src.asm.operand.*;
-import src.ir.constant.IntConst;
-import src.ir.constant.NullConst;
 import src.ir.type.BaseType;
+
+import java.util.ArrayList;
 
 public class Entity {
     public BaseType type;
     public String name;
 
     public Operand operand = null;
+
+    public ArrayList<Entity> users = new ArrayList<>();
+    public ArrayList<Entity> operands = new ArrayList<>();
 
     public Entity(BaseType type, String name) {
         this.type = type;

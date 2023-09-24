@@ -6,16 +6,16 @@ import src.ir.type.BaseType;
 import src.ir.type.PtrType;
 
 public class AllocaInst extends Inst {
-    public BaseType type;
+    public BaseType baseType;
 
-    public AllocaInst(BaseType type, String name, Block belonging) {
-        super(new PtrType(type), name, belonging);
-        this.type = type;
+    public AllocaInst(BaseType baseType, String name, Block belonging) {
+        super(new PtrType(baseType), name, belonging);
+        this.baseType = baseType;
     }
 
     @Override
     public String toString() {
-        return "%s = alloca %s, align %d".formatted(name(), type, type.size);
+        return "%s = alloca %s, align %d".formatted(name(), baseType, baseType.size);
     }
 
     @Override

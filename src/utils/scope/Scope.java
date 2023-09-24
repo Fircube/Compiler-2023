@@ -25,8 +25,7 @@ public class Scope {
     }
 
     public boolean isInLoop() {
-        if (this instanceof LoopScope)
-            return true;
+        if (this instanceof LoopScope) return true;
         if (!(this instanceof FuncScope) && !(this instanceof ClassScope) && this.parentScope != null)
             return parentScope.isInLoop();
         return false;

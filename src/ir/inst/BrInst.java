@@ -7,7 +7,7 @@ import src.ir.type.VoidType;
 
 public class BrInst extends Inst {
     public boolean isJump;
-    public int phi=0;
+    //    public int phi=0;
     public Entity con;
     public Block trueDest;
     public Block falseDest;
@@ -18,12 +18,12 @@ public class BrInst extends Inst {
         this.trueDest = dest;
     }
 
-    public BrInst(int phi,Block dest, Block belonging) {
-        super(new VoidType(), "br", belonging);
-        this.phi= phi;
-        this.isJump = true;
-        this.trueDest = dest;
-    }
+//    public BrInst(int phi,Block dest, Block belonging) {
+//        super(new VoidType(), "br", belonging);
+//        this.phi= phi;
+//        this.isJump = true;
+//        this.trueDest = dest;
+//    }
 
     public BrInst(Entity con, Block trueDest, Block falseDest, Block belonging) {
         super(new VoidType(), "br", belonging);
@@ -39,11 +39,8 @@ public class BrInst extends Inst {
 
     @Override
     public String toString() {
-        if (isJump) {
-            return "br %s".formatted(trueDest.nameWithType());
-        } else {
-            return "br %s, %s, %s".formatted(con.nameWithType(), trueDest.nameWithType(), falseDest.nameWithType());
-        }
+        if (isJump) return "br %s".formatted(trueDest.nameWithType());
+        return "br %s, %s, %s".formatted(con.nameWithType(), trueDest.nameWithType(), falseDest.nameWithType());
     }
 
     @Override

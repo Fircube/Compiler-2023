@@ -289,6 +289,19 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(IfStmtNode it) {
         it.condition.accept(this);
+        if (it.condition.val instanceof IntConst i) {
+            if (i.value > 0) {
+                curScope = new Scope(curScope);
+                it.thenStmt.accept(this);
+                curScope = curScope.getParentScope();
+            } else if (it.elseStmt != null) {
+                curScope = new Scope(curScope);
+                it.elseStmt.accept(this);
+                curScope = curScope.getParentScope();
+            }
+            return;
+        }
+
         Block thenBlock = new Block(rename("if.then"), curFunc);
         Block elseBlock = new Block(rename("if.else"), curFunc);
         Block endBlock = new Block(rename("if.end"), curFunc);
@@ -380,7 +393,7 @@ public class IRBuilder implements ASTVisitor {
     public void visit(BinaryExprNode it) {
         it.lhs.accept(this);
         if (it.op.equals("&&")) {
-            if (it.lhs.val !=null && it.lhs.val instanceof IntConst b) {
+            if (it.lhs.val != null && it.lhs.val instanceof IntConst b) {
                 if (b.value == 0) {
                     it.val = new BoolConst(false);
                 } else {
@@ -408,7 +421,7 @@ public class IRBuilder implements ASTVisitor {
             curBlock = endBlock;
             return;
         } else if (it.op.equals("||")) {
-            if (it.lhs.val !=null && it.lhs.val instanceof IntConst b) {
+            if (it.lhs.val != null && it.lhs.val instanceof IntConst b) {
                 if (b.value == 0) {
                     it.rhs.accept(this);
                     it.val = it.rhs.val;
@@ -442,31 +455,30 @@ public class IRBuilder implements ASTVisitor {
             return;
         }
         if (it.lhs.val instanceof IntConst l && it.rhs.val instanceof IntConst r) {
-            if ((it.op.equals("/") || it.op.equals("%")) && r.value == 0){
-                it.val = new NullConst();
+            if ((it.op.equals("/") || it.op.equals("%")) && r.value == 0) {
+                it.val = null;
+            } else {
+                switch (it.op) {
+                    case "+" -> it.val = new IntConst(l.value + r.value);
+                    case "-" -> it.val = new IntConst(l.value - r.value);
+                    case "*" -> it.val = new IntConst(l.value * r.value);
+                    case "/" -> it.val = new IntConst(l.value / r.value);
+                    case "%" -> it.val = new IntConst(l.value % r.value);
+                    case ">" -> it.val = new BoolConst(l.value > r.value);
+                    case "<" -> it.val = new BoolConst(l.value < r.value);
+                    case ">=" -> it.val = new BoolConst(l.value >= r.value);
+                    case "<=" -> it.val = new BoolConst(l.value <= r.value);
+                    case "!=" -> it.val = new BoolConst(l.value != r.value);
+                    case "==" -> it.val = new BoolConst(l.value == r.value);
+                    case ">>" -> it.val = new IntConst(l.value >> r.value);
+                    case "<<" -> it.val = new IntConst(l.value << r.value);
+                    case "&" -> it.val = new IntConst(l.value & r.value);
+                    case "|" -> it.val = new IntConst(l.value | r.value);
+                    case "^" -> it.val = new IntConst(l.value ^ r.value);
+                    default -> throw new IRError(it.pos, "unknown operator");
+                }
                 return;
             }
-//                throw new IRError(it.pos, "The divisor cannot be 0");
-            switch (it.op) {
-                case "+" -> it.val = new IntConst(l.value + r.value);
-                case "-" -> it.val = new IntConst(l.value - r.value);
-                case "*" -> it.val = new IntConst(l.value * r.value);
-                case "/" -> it.val = new IntConst(l.value / r.value);
-                case "%" -> it.val = new IntConst(l.value % r.value);
-                case ">" -> it.val = new BoolConst(l.value > r.value);
-                case "<" -> it.val = new BoolConst(l.value < r.value);
-                case ">=" -> it.val = new BoolConst(l.value >= r.value);
-                case "<=" -> it.val = new BoolConst(l.value <= r.value);
-                case "!=" -> it.val = new BoolConst(l.value != r.value);
-                case "==" -> it.val = new BoolConst(l.value == r.value);
-                case ">>" -> it.val = new IntConst(l.value >> r.value);
-                case "<<" -> it.val = new IntConst(l.value << r.value);
-                case "&" -> it.val = new IntConst(l.value & r.value);
-                case "|" -> it.val = new IntConst(l.value | r.value);
-                case "^" -> it.val = new IntConst(l.value ^ r.value);
-                default -> throw new IRError(it.pos, "unknown operator");
-            }
-            return;
         }
 
         String name = null;
@@ -713,11 +725,13 @@ public class IRBuilder implements ASTVisitor {
         curBlock = trueBlock;
         it.trueExpr.accept(this);
         trueSource = curBlock;
-        new BrInst(phiCnt, endBlock, curBlock);
+        new BrInst(endBlock, curBlock);
+//        new BrInst(phiCnt, endBlock, curBlock);
         curBlock = falseBlock;
         it.falseExpr.accept(this);
         falseSource = curBlock;
-        new BrInst(phiCnt, endBlock, curBlock);
+        new BrInst(endBlock, curBlock);
+//        new BrInst(phiCnt, endBlock, curBlock);
         curBlock = endBlock;
         if (it.trueExpr.val != null || it.trueExpr.ptr != null) {
             if (!(getValue(it.trueExpr).type instanceof VoidType)) {
@@ -825,6 +839,4 @@ public class IRBuilder implements ASTVisitor {
                 .replace("\\\\", "\\");
     }
 }
-
-
 

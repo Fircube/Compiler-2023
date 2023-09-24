@@ -66,7 +66,7 @@ public class Compiler {
 //        var out = new PrintStream(System.out);
         var irPrinter = new IRPrinter(out, globalScope);
         irPrinter.print();
-        outFile.close();
+//        outFile.close();
 
         new InstSelection(globalScope);
 //        var regAlloca = new RegAlloca(globalScope);

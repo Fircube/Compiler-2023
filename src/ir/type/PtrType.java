@@ -10,7 +10,7 @@ public class PtrType extends BaseType {
 
     @Override
     public String toString() {
-        return "ptr";
-//        return baseType + "*";
+//        return "ptr";
+        return baseType + "*";
     }
 }

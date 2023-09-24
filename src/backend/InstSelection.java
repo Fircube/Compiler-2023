@@ -177,7 +177,7 @@ public class InstSelection implements IRVisitor {
 
     @Override
     public void visit(AllocaInst inst) {
-        inst.operand = newVirtReg(inst.type.size);
+        inst.operand = newVirtReg(inst.baseType.size);
     }
 
     @Override
@@ -510,7 +510,7 @@ public class InstSelection implements IRVisitor {
             return new Pair<>(reg, new Imm(0));
         }
         if (entity instanceof AllocaInst a) {
-            if (a.operand == null) a.operand = newVirtReg(((PtrType) a.type).baseType.size);
+            if (a.operand == null) a.operand = newVirtReg(((PtrType) a.baseType).baseType.size);
             return getAddr((VirtReg) a.operand);
         }
         loadReg(reg, entity);

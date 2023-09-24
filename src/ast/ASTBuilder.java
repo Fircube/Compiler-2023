@@ -25,8 +25,8 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
     public ASTNode visitFuncDef(FuncDefContext ctx) {
         TypeNode returnType = (TypeNode) visit(ctx.returnType());
         ParamNode params = new ParamNode(new Position(ctx));
-        BlockNode suite = (BlockNode) visit(ctx.suite());
         if (ctx.parameter() != null) params = (ParamNode) visit(ctx.parameter());
+        BlockNode suite = (BlockNode) visit(ctx.suite());
         return new FuncDefNode(returnType, ctx.Identifier().getText(), params, suite, new Position(ctx));
     }
 
