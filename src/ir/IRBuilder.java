@@ -18,7 +18,7 @@ import java.util.HashMap;
 public class IRBuilder implements ASTVisitor {
     private final GlobalScope globalScope;
 
-    private int phiCnt = 1;
+    private int phiCnt;
     private Scope curScope;
     private Block curBlock;
     private Function curFunc;
@@ -30,6 +30,7 @@ public class IRBuilder implements ASTVisitor {
 
     public IRBuilder(GlobalScope globalScope) {
         this.curScope = this.globalScope = globalScope;
+        this.phiCnt = globalScope.phiCnt;
     }
 
     @Override
@@ -39,6 +40,11 @@ public class IRBuilder implements ASTVisitor {
             if (i instanceof ClassDefNode cls) {
                 ClassType clsType = new ClassType("%class." + cls.className, 0);
                 globalScope.addClassType(cls.className, clsType);
+            }
+        }
+        for (var i : it.defs) {
+            if (i instanceof ClassDefNode cls) {
+                var clsType = globalScope.getClassType(cls.className);
                 curScope = globalScope.getClassScope(cls.className);
                 for (var vars : cls.members) {
                     for (var v : vars.defs) {
@@ -208,8 +214,8 @@ public class IRBuilder implements ASTVisitor {
 
         it.suite.accept(this);
         if (!curBlock.terminated) {
-            if (((RetInst) curFunc.exit).value != null)
-                ((LoadInst) ((RetInst) curFunc.exit).value).addToBlock(curBlock);
+            if (!curFunc.exit.operands.isEmpty())
+                ((LoadInst) ((RetInst) curFunc.exit).value()).addToBlock(curBlock);
             curFunc.exit.addToBlock(curBlock);
         }
         curScope = curScope.getParentScope();
@@ -793,7 +799,7 @@ public class IRBuilder implements ASTVisitor {
 
     private final HashMap<String, Integer> varRecord = new HashMap<>();
 
-    private String rename(String name) {
+    public String rename(String name) {
         var times = varRecord.get(name);
         String renew = name;
         if (times == null) {

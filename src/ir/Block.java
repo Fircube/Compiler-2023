@@ -2,7 +2,9 @@ package src.ir;
 
 import src.ir.inst.*;
 import src.ir.type.LabelType;
+import src.middleend.DomTreeNode;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 public class Block extends Entity {
@@ -10,6 +12,9 @@ public class Block extends Entity {
     public LinkedList<PhiInst> phiInsts = new LinkedList<>();
 
     public boolean terminated = false;
+    public DomTreeNode domTreeNode = new DomTreeNode(this);
+    public ArrayList<Block> preds = new ArrayList<>();
+    public ArrayList<Block> nexts = new ArrayList<>();
 
 
     public Block(String name, Function belonging) {

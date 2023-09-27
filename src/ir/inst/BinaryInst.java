@@ -6,13 +6,20 @@ import src.ir.IRVisitor;
 
 public class BinaryInst extends Inst {
     public String op;
-    public Entity lhs, rhs;
 
     public BinaryInst(String op, Entity lhs, Entity rhs, String name, Block belonging) {
         super(lhs.type, name, belonging);
         this.op = op;
-        this.lhs = lhs;
-        this.rhs = rhs;
+        addOperand(lhs);
+        addOperand(rhs);
+    }
+
+    public Entity lhs(){
+        return operands.get(0);
+    }
+
+    public Entity rhs(){
+        return operands.get(1);
     }
 
     @Override
@@ -30,7 +37,7 @@ public class BinaryInst extends Inst {
             case "^" -> "xor";
             default -> null;
         };
-        return "%s = %s %s %s, %s".formatted(name(), order, type, lhs.name(), rhs.name());
+        return "%s = %s %s %s, %s".formatted(name(), order, type, lhs().name(), rhs().name());
     }
 
     @Override

@@ -19,6 +19,24 @@ public class Entity {
         this.name = name;
     }
 
+    public void addOperand(Entity e) {
+        this.operands.add(e);
+        e.users.add(this);
+    }
+
+    public void replaceUsesTo(Entity e) {
+        for (var user : users) {
+            var operands = user.operands;
+            for (int i = 0; i < operands.size(); ++i) {
+                if (operands.get(i) == this) {
+                    operands.set(i, e);
+                }
+            }
+            e.users.add(user);
+        }
+        users.clear();
+    }
+
     public String name() {
         return name;
     }

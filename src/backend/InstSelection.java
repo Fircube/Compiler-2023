@@ -15,6 +15,7 @@ import src.ir.Function;
 import src.ir.IRVisitor;
 import src.ir.constant.*;
 import src.ir.inst.*;
+import src.ir.inst.MvInst;
 import src.ir.type.*;
 import src.utils.Position;
 import src.utils.error.IRError;
@@ -81,7 +82,7 @@ public class InstSelection implements IRVisitor {
             curFunc.blocks.add((ASMBlock) block.operand);
             for (var inst : block.insts) {
                 if (inst instanceof src.ir.inst.CallInst) {
-                    paramCnt = Math.max(paramCnt, ((src.ir.inst.CallInst) inst).paramList.size());
+                    paramCnt = Math.max(paramCnt, inst.operands.size() - 1);
                 }
             }
         }
@@ -91,14 +92,14 @@ public class InstSelection implements IRVisitor {
         curBlock = curFunc.entryBlock;
 //        new MvInst(curFunc.cacheRa, ra, curBlock);
 
-        for (int i = 0; i < func.params.size(); ++i) {
+        for (int i = 0; i < func.operands.size(); ++i) {
             if (i < 8) {
-                setRegSize(PhysReg.regMap.get("a" + i), func.params.get(i));
-                storeReg(PhysReg.regMap.get("a" + i), func.params.get(i));
+                setRegSize(PhysReg.regMap.get("a" + i), func.operands.get(i));
+                storeReg(PhysReg.regMap.get("a" + i), func.operands.get(i));
             } else {
-                setRegSize(t2, func.params.get(i));
-                new LoadInst(func.params.get(i).type.size, t2, fp, new Imm((i - 8) << 2), curBlock);
-                storeReg(t2, func.params.get(i));
+                setRegSize(t2, func.operands.get(i));
+                new LoadInst(func.operands.get(i).type.size, t2, fp, new Imm((i - 8) << 2), curBlock);
+                storeReg(t2, func.operands.get(i));
             }
         }
 
@@ -150,18 +151,18 @@ public class InstSelection implements IRVisitor {
             }
             var inst1 = block.insts.get(block.insts.size() - 2);
             var inst2 = block.insts.get(block.insts.size() - 1);
-            if (inst1 instanceof IcmpInst icmp && inst2 instanceof src.ir.inst.BrInst br && !br.isJump && br.con == icmp) {
-                loadReg(t0, icmp.lhs);
-                loadReg(t1, icmp.rhs);
+            if (inst1 instanceof IcmpInst icmp && inst2 instanceof src.ir.inst.BrInst br && !br.isJump && br.con() == icmp) {
+                loadReg(t0, icmp.lhs());
+                loadReg(t1, icmp.rhs());
                 switch (icmp.op) {
-                    case ">" -> new src.asm.inst.BrInst("bgt", t0, t1, (ASMBlock) br.trueDest.operand, curBlock);
-                    case "<" -> new src.asm.inst.BrInst("blt", t0, t1, (ASMBlock) br.trueDest.operand, curBlock);
-                    case ">=" -> new src.asm.inst.BrInst("bge", t0, t1, (ASMBlock) br.trueDest.operand, curBlock);
-                    case "<=" -> new src.asm.inst.BrInst("ble", t0, t1, (ASMBlock) br.trueDest.operand, curBlock);
-                    case "!=" -> new src.asm.inst.BrInst("bne", t0, t1, (ASMBlock) br.trueDest.operand, curBlock);
-                    case "==" -> new src.asm.inst.BrInst("beq", t0, t1, (ASMBlock) br.trueDest.operand, curBlock);
+                    case ">" -> new src.asm.inst.BrInst("bgt", t0, t1, (ASMBlock) br.trueDest().operand, curBlock);
+                    case "<" -> new src.asm.inst.BrInst("blt", t0, t1, (ASMBlock) br.trueDest().operand, curBlock);
+                    case ">=" -> new src.asm.inst.BrInst("bge", t0, t1, (ASMBlock) br.trueDest().operand, curBlock);
+                    case "<=" -> new src.asm.inst.BrInst("ble", t0, t1, (ASMBlock) br.trueDest().operand, curBlock);
+                    case "!=" -> new src.asm.inst.BrInst("bne", t0, t1, (ASMBlock) br.trueDest().operand, curBlock);
+                    case "==" -> new src.asm.inst.BrInst("beq", t0, t1, (ASMBlock) br.trueDest().operand, curBlock);
                 }
-                new JumpInst((ASMBlock) br.falseDest.operand, curBlock);
+                new JumpInst((ASMBlock) br.falseDest().operand, curBlock);
             } else {
                 inst1.accept(this);
                 inst2.accept(this);
@@ -225,12 +226,14 @@ public class InstSelection implements IRVisitor {
             }
         }
         if (hasImm) {
-            if (isCommutative && inst.lhs instanceof IntConst) {
-                var tmp = inst.lhs;
-                inst.lhs = inst.rhs;
-                inst.rhs = tmp;
+            if (isCommutative && inst.lhs() instanceof IntConst) {
+                var lhs = inst.lhs();
+                var rhs = inst.rhs();
+                inst.operands.clear();
+                inst.operands.add(lhs);
+                inst.operands.add(rhs);
             }
-            if (inst.rhs instanceof IntConst v) {
+            if (inst.rhs() instanceof IntConst v) {
                 String op_ = op + "i";
                 int value = v.value;
                 if (op.equals("sub")) {
@@ -238,38 +241,40 @@ public class InstSelection implements IRVisitor {
                     value = -value;
                 }
                 if (isValue(value)) {
-                    loadReg(t1, inst.lhs);
+                    loadReg(t1, inst.lhs());
                     new IBinaryInst(op_, t0, t1, new Imm(value), curBlock);
                     storeReg(t0, inst);
                     return;
                 }
             }
         }
-        loadReg(t1, inst.lhs);
-        loadReg(t2, inst.rhs);
+        loadReg(t1, inst.lhs());
+        loadReg(t2, inst.rhs());
         new RBinaryInst(op, t0, t1, t2, curBlock);
         storeReg(t0, inst);
     }
 
     @Override
     public void visit(BitCastInst inst) {
-        loadReg(t0, inst.value);
+        loadReg(t0, inst.value());
         storeReg(t0, inst);
     }
 
     @Override
     public void visit(src.ir.inst.BrInst inst) {
         if (!inst.isJump) {
-            loadReg(t0, inst.con);
-            new BeqzInst(t0, (ASMBlock) inst.falseDest.operand, curBlock);
+            loadReg(t0, inst.con());
+            new BeqzInst(t0, (ASMBlock) inst.falseDest().operand, curBlock);
+            new JumpInst((ASMBlock) inst.trueDest().operand, curBlock);
+        } else {
+            new JumpInst((ASMBlock) inst.dest().operand, curBlock);
         }
-        new JumpInst((ASMBlock) inst.trueDest.operand, curBlock);
     }
 
     @Override
     public void visit(src.ir.inst.CallInst inst) {
-        for (int i = 0; i < inst.paramList.size(); ++i) {
-            var param = inst.paramList.get(i);
+        for (int i = 0; i < inst.operands.size() - 1; ++i) {
+            var param = inst.operands.get(i + 1);
             if (i < 8) {
                 setRegSize(PhysReg.regMap.get("a" + i), param);
                 loadReg(PhysReg.regMap.get("a" + i), param);
@@ -279,7 +284,7 @@ public class InstSelection implements IRVisitor {
                 new StoreInst(param.type.size, t2, sp, new Imm((i - 8) << 2), curBlock);
             }
         }
-        new CallInst((ASMFunction) inst.func.operand, curBlock);
+        new CallInst((ASMFunction) inst.func().operand, curBlock);
         if (!(inst.type instanceof VoidType)) {
             setRegSize(a0, inst);
             storeReg(a0, inst);
@@ -288,7 +293,7 @@ public class InstSelection implements IRVisitor {
 
     @Override
     public void visit(GetElementPtrInst inst) {
-        var ptr = inst.ptr;
+        var ptr = inst.ptr();
         var baseType = ((PtrType) ptr.type).baseType;
         if (baseType instanceof ArrayType) { // string
             var s = (GlobalStr) ptr.operand;
@@ -297,11 +302,11 @@ public class InstSelection implements IRVisitor {
             storeReg(t0, inst);
         } else if (baseType instanceof ClassType) { // class member
             loadReg(t1, ptr);
-            var idx = (IntConst) inst.indexList.get(1);
+            var idx = (IntConst) inst.operands.get(2);
             new IBinaryInst("addi", t0, t1, new Imm(idx.value << 2), curBlock);
             storeReg(t0, inst);
         } else {
-            var idx = inst.indexList.get(0);
+            var idx = inst.operands.get(1);
             if (idx instanceof IntConst i) {
                 int val = i.value * baseType.size;
                 if (isValue(val)) {
@@ -330,8 +335,8 @@ public class InstSelection implements IRVisitor {
 
     @Override
     public void visit(IcmpInst inst) {
-        loadReg(t1, inst.lhs);
-        loadReg(t2, inst.rhs);
+        loadReg(t1, inst.lhs());
+        loadReg(t2, inst.rhs());
         switch (inst.op) {
             case ">" -> new RBinaryInst("sgt", t0, t1, t2, curBlock);
             case "<" -> new RBinaryInst("slt", t0, t1, t2, curBlock);
@@ -357,13 +362,13 @@ public class InstSelection implements IRVisitor {
 
     @Override
     public void visit(src.ir.inst.LoadInst inst) {
-        if (inst.ptr instanceof Const c) { // global variable and string
+        if (inst.ptr() instanceof Const c) { // global variable and string
             new LuiInst(t1, new Relocation("hi", (Global) c.operand), curBlock);
-            new LoadInst(((PtrType) inst.ptr.type).baseType.size, t0, t1, new Relocation("lo", (Global) c.operand), curBlock);
+            new LoadInst(((PtrType) inst.ptr().type).baseType.size, t0, t1, new Relocation("lo", (Global) c.operand), curBlock);
             storeReg(t0, inst);
         } else {
             t1.size = 4;
-            Pair<Reg, Imm> pair = getPtrAddr(t1, inst.ptr);
+            Pair<Reg, Imm> pair = getPtrAddr(t1, inst.ptr());
             setRegSize(t0, inst);
             new LoadInst(t0.size, t0, pair.a, pair.b, curBlock);
             storeReg(t0, inst);
@@ -371,54 +376,36 @@ public class InstSelection implements IRVisitor {
     }
 
     @Override
+    public void visit(MvInst inst) {
+        setRegSize(t0, inst.src());
+        loadReg(t0,inst.src());
+        storeReg(t0,inst.dest());
+    }
+
+    @Override
     public void visit(PhiInst inst) {
-        ASMBlock tmpBlock = curBlock;
-        ASMBlock block1 = (ASMBlock) inst.label.get(0).operand;
-        ASMBlock newBlock1 = new ASMBlock(".LphiTrueSource." + inst.idx);
-        ASMBlock block2 = (ASMBlock) inst.label.get(1).operand;
-        ASMBlock newBlock2 = new ASMBlock(".LphiFalseSource." + inst.idx);
-
-        block1.insts.removeLast();
-        new JumpInst(newBlock1, block1);
-        curBlock = newBlock1;
-        setRegSize(t0, inst);
-        loadReg(t0, inst.value.get(0));
-        storeReg(t0, inst);
-        new JumpInst(tmpBlock, curBlock);
-        curFunc.blocks.add(newBlock1);
-
-        block2.insts.removeLast();
-        new JumpInst(newBlock2, block2);
-        curBlock = newBlock2;
-        setRegSize(t0, inst);
-        loadReg(t0, inst.value.get(1));
-        storeReg(t0, inst);
-        new JumpInst(tmpBlock, curBlock);
-        curFunc.blocks.add(newBlock2);
-
-        curBlock = tmpBlock;
     }
 
     @Override
     public void visit(src.ir.inst.RetInst inst) {
-        if (inst.value != null) {
-            setRegSize(PhysReg.regMap.get("a0"), inst.value);
-            loadReg(PhysReg.regMap.get("a0"), inst.value);
+        if (!inst.operands.isEmpty()) {
+            setRegSize(PhysReg.regMap.get("a0"), inst.value());
+            loadReg(PhysReg.regMap.get("a0"), inst.value());
         }
     }
 
     @Override
     public void visit(src.ir.inst.StoreInst inst) {
-        if (inst.ptr instanceof Const c) { // global variable and string
-            loadReg(t0, inst.value);
+        if (inst.ptr() instanceof Const c) { // global variable and string
+            loadReg(t0, inst.value());
             new LuiInst(t1, new Relocation("hi", (Global) c.operand), curBlock);
-            new StoreInst(inst.value.type.size, t0, t1, new Relocation("lo", (Global) c.operand), curBlock);
+            new StoreInst(inst.value().type.size, t0, t1, new Relocation("lo", (Global) c.operand), curBlock);
         } else {
             t1.size = 4;
-            Pair<Reg, Imm> pair = getPtrAddr(t1, inst.ptr);
-            setRegSize(t0, inst.value);
-            loadReg(t0, inst.value);
-            new StoreInst(inst.value.type.size, t0, pair.a, pair.b, curBlock);
+            Pair<Reg, Imm> pair = getPtrAddr(t1, inst.ptr());
+            setRegSize(t0, inst.value());
+            loadReg(t0, inst.value());
+            new StoreInst(inst.value().type.size, t0, pair.a, pair.b, curBlock);
         }
     }
 

@@ -57,11 +57,11 @@ public class IRPrinter {
             Function func = globalScope.functions.get(key);
             FuncType funcType = (FuncType) func.type;
             StringBuilder s = new StringBuilder();
-            if (!func.params.isEmpty()) {
-                for (int i = 0; i < func.params.size() - 1; ++i) {
-                    s.append(func.params.get(i).nameWithType()).append(", ");
+            if (!func.operands.isEmpty()) {
+                for (int i = 0; i < func.operands.size() - 1; ++i) {
+                    s.append(func.operands.get(i).nameWithType()).append(", ");
                 }
-                s.append(func.params.get(funcType.paramTypes.size() - 1).nameWithType());
+                s.append(func.operands.get(funcType.paramTypes.size() - 1).nameWithType());
             }
             os.printf("define %s %s(%s) {\n", funcType.retType, func.name, s);
             for (var i : func.blocks) {

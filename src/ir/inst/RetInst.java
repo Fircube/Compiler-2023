@@ -6,15 +6,17 @@ import src.ir.IRVisitor;
 import src.ir.type.VoidType;
 
 public class RetInst extends Inst {
-    public Entity value;
-
     public RetInst(Block belonging) {
         super(new VoidType(), "ret", belonging);
     }
 
     public RetInst(Entity value, Block belonging) {
         super(value.type, "ret", belonging);
-        this.value = value;
+        addOperand(value);
+    }
+
+    public Entity value(){
+        return operands.get(0);
     }
 
     public boolean isTerminalInst() {
@@ -26,7 +28,7 @@ public class RetInst extends Inst {
         if (this.type instanceof VoidType) {
             return "ret void";
         } else {
-            return "ret %s".formatted(value.nameWithType());
+            return "ret %s".formatted(value().nameWithType());
         }
     }
 

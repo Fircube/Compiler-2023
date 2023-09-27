@@ -8,7 +8,6 @@ import java.util.ArrayList;
 
 public class Function extends Const {
     public ArrayList<Block> blocks = new ArrayList<>();
-    public ArrayList<Entity> params = new ArrayList<>();
     public Block entryBlock;
     public Entity retValPtr;
     public Inst exit;
@@ -20,7 +19,7 @@ public class Function extends Const {
     }
 
     public void addParams(Entity param) {
-        params.add(param);
+        addOperand(param);
     }
 
     public void accept(IRVisitor visitor) {

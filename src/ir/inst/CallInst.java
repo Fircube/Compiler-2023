@@ -11,19 +11,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class CallInst extends Inst {
-    public Function func;
-    public ArrayList<Entity> paramList = new ArrayList<>();
-
     public CallInst(String name, Block belonging, Function func, Entity... params) {
         super(((FuncType) func.type).retType, name, belonging);
-        this.func = func;
-        paramList.addAll(Arrays.asList(params));
+        addOperand(func);
+        for (var i : params) {
+            addOperand(i);
+        }
+//        paramList.addAll(Arrays.asList(params));
     }
 
     public CallInst(String name, Block belonging, Function func, ArrayList<Entity> params) {
         super(((FuncType) func.type).retType, name, belonging);
-        this.func = func;
-        paramList.addAll(params);
+        addOperand(func);
+        for (var i : params) {
+            addOperand(i);
+        }
+//        paramList.addAll(params);
+    }
+
+    public Function func() {
+        return (Function) operands.get(0);
     }
 
     @Override
@@ -32,12 +39,12 @@ public class CallInst extends Inst {
         if (!(this.type instanceof VoidType)) {
             str.append("%s = ".formatted(name()));
         }
-        str.append("call %s %s(".formatted(type, func.name()));
-        if (!paramList.isEmpty()) {
-            str.append(paramList.get(0).nameWithType());
-            for (int i = 1; i < paramList.size(); ++i) {
+        str.append("call %s %s(".formatted(type, func().name()));
+        if (operands.size() > 1) {
+            str.append(operands.get(1).nameWithType());
+            for (int i = 2; i < operands.size(); ++i) {
                 str.append(", ");
-                str.append(paramList.get(i).nameWithType());
+                str.append(operands.get(i).nameWithType());
             }
         }
         str.append(")");

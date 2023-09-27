@@ -7,13 +7,20 @@ import src.ir.type.IntType;
 
 public class IcmpInst extends Inst {
     public String op;
-    public Entity lhs, rhs;
 
     public IcmpInst(String op, Entity lhs, Entity rhs, String name, Block belonging) {
         super(new IntType(1), name, belonging);
         this.op = op;
-        this.lhs = lhs;
-        this.rhs = rhs;
+        addOperand(lhs);
+        addOperand(rhs);
+    }
+
+    public Entity lhs(){
+        return operands.get(0);
+    }
+
+    public Entity rhs(){
+        return operands.get(1);
     }
 
     @Override
@@ -27,7 +34,7 @@ public class IcmpInst extends Inst {
             case "==" -> "eq";
             default -> null;
         };
-        return "%s = icmp %s %s, %s".formatted(name(), order, lhs.nameWithType(), rhs.name());
+        return "%s = icmp %s %s, %s".formatted(name(), order, lhs().nameWithType(), rhs().name());
     }
 
     @Override

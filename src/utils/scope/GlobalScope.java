@@ -32,10 +32,7 @@ public class GlobalScope extends Scope {
     public ArrayList<GlobalStr> gStrs = new ArrayList<>();
     public ArrayList<ASMFunction> funcs = new ArrayList<>();
 
-
-
-
-
+    public int phiCnt = 1;
 
     public GlobalScope() {
         super(null);

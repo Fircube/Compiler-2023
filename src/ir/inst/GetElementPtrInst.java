@@ -10,23 +10,26 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class GetElementPtrInst extends Inst {
-    public Entity ptr;
-    public ArrayList<Entity> indexList = new ArrayList<>();
-
     public GetElementPtrInst(BaseType retType, String name, Block belonging, Entity ptr, Entity... idx) {
         super(retType, name, belonging);
-        this.ptr = ptr;
-        indexList.addAll(Arrays.asList(idx));
+        addOperand(ptr);
+        for (var i : idx) {
+            addOperand(i);
+        }
+//        indexList.addAll(Arrays.asList(idx));
     }
 
+    public Entity ptr(){
+        return operands.get(0);
+    }
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder(new StringBuilder("%s = getelementptr inbounds %s, %s, ".formatted(name(), ((PtrType) ptr.type).baseType, ptr.nameWithType())));
-        if (!indexList.isEmpty()) {
-            s.append(indexList.get(0).nameWithType());
-            for (int i = 1; i < indexList.size(); ++i) {
+        StringBuilder s = new StringBuilder(new StringBuilder("%s = getelementptr inbounds %s, %s, ".formatted(name(), ((PtrType) ptr().type).baseType, ptr().nameWithType())));
+        if (operands.size()>1) {
+            s.append(operands.get(1).nameWithType());
+            for (int i = 2; i < operands.size(); ++i) {
                 s.append(", ");
-                s.append(indexList.get(i).nameWithType());
+                s.append(operands.get(2).nameWithType());
             }
         }
         return s.toString();

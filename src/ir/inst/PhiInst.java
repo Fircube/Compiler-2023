@@ -9,28 +9,35 @@ import java.util.ArrayList;
 
 public class PhiInst extends Inst {
     public int idx;
-    public ArrayList<Entity> value = new ArrayList<>();
-    public ArrayList<Block> label = new ArrayList<>();
+//    public ArrayList<Entity> value = new ArrayList<>();
+//    public ArrayList<Block> label = new ArrayList<>();
 
     public PhiInst(int idx, BaseType type, String name, Block belonging) {
         super(type, name, null);
         this.idx = idx;
-        if (belonging != null) belonging.phiInsts.add(this);
+        if (this.belonging != belonging) {
+            this.belonging = belonging;
+            if (belonging != null) {
+                belonging.phiInsts.add(this);
+            }
+        }
     }
 
     public void addBranch(Entity value, Block block) {
-        this.value.add(value);
-        this.label.add(block);
+        addOperand(value);
+        addOperand(block);
+//        this.value.add(value);
+//        this.label.add(block);
     }
 
     @Override
     public String toString() {
         StringBuilder s = new StringBuilder("%s = phi %s ".formatted(name, type));
-        if (!value.isEmpty()) {
-            s.append("[%s, %s]".formatted(value.get(0).name(), "%" + label.get(0).name()));
-            for (int i = 1; i < value.size(); ++i) {
+        if (!operands.isEmpty()) {
+            s.append("[%s, %s]".formatted(operands.get(0).name(), "%" + operands.get(1).name()));
+            for (int i = 2; i < operands.size(); i += 2) {
                 s.append(", ");
-                s.append("[%s, %s]".formatted(value.get(i).name(), "%" + label.get(i).name()));
+                s.append("[%s, %s]".formatted(operands.get(i).name(), "%" + operands.get(i + 1).name()));
             }
         }
         return s.toString();

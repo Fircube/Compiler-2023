@@ -8,14 +8,11 @@ import src.ir.type.VoidType;
 public class BrInst extends Inst {
     public boolean isJump;
     //    public int phi=0;
-    public Entity con;
-    public Block trueDest;
-    public Block falseDest;
 
     public BrInst(Block dest, Block belonging) {
         super(new VoidType(), "br", belonging);
         this.isJump = true;
-        this.trueDest = dest;
+        addOperand(dest);
     }
 
 //    public BrInst(int phi,Block dest, Block belonging) {
@@ -28,9 +25,23 @@ public class BrInst extends Inst {
     public BrInst(Entity con, Block trueDest, Block falseDest, Block belonging) {
         super(new VoidType(), "br", belonging);
         this.isJump = false;
-        this.con = con;
-        this.trueDest = trueDest;
-        this.falseDest = falseDest;
+        addOperand(con);
+        addOperand(trueDest);
+        addOperand(falseDest);
+    }
+
+    public Block dest(){
+        return (Block) operands.get(0);
+    }
+
+    public Entity con(){
+        return operands.get(0);
+    };
+    public Block trueDest(){
+        return (Block) operands.get(1);
+    }
+    public Block falseDest(){
+        return (Block) operands.get(2);
     }
 
     public boolean isTerminalInst() {
@@ -39,8 +50,8 @@ public class BrInst extends Inst {
 
     @Override
     public String toString() {
-        if (isJump) return "br %s".formatted(trueDest.nameWithType());
-        return "br %s, %s, %s".formatted(con.nameWithType(), trueDest.nameWithType(), falseDest.nameWithType());
+        if (isJump) return "br %s".formatted(dest().nameWithType());
+        return "br %s, %s, %s".formatted(con().nameWithType(), trueDest().nameWithType(), falseDest().nameWithType());
     }
 
     @Override

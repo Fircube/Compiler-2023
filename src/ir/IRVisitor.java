@@ -24,6 +24,8 @@ public interface IRVisitor {
 
     void visit(LoadInst inst);
 
+    void visit(MvInst inst);
+
     void visit(PhiInst inst);
 
     void visit(RetInst inst);

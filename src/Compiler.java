@@ -2,15 +2,10 @@ package src;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import src.asm.ASMPrinter;
 import src.backend.InstSelection;
-import src.ast.ASTBuilder;
-import src.ast.rootNode.ProgramNode;
-import src.frontend.SemanticChecker;
-import src.frontend.SymbolCollector;
-import src.ir.IRBuilder;
-import src.ir.IRPrinter;
+import src.frontend.FrontEnd;
+import src.middleend.MiddleEnd;
 import src.parser.MxLexer;
 import src.parser.MxParser;
 import src.utils.error.MxError;
@@ -52,30 +47,22 @@ public class Compiler {
         parser.removeErrorListeners();
         parser.addErrorListener(new MxErrorListener());
 
-        ParseTree parseTreeRoot = parser.program();
-        ProgramNode ASTRoot = (ProgramNode) new ASTBuilder().visit(parseTreeRoot);
+        var frontEnd = new FrontEnd(parser.program(), globalScope);
 
-        new SymbolCollector(globalScope).visit(ASTRoot);
-        new SemanticChecker(globalScope).visit(ASTRoot);
-
-        globalScope.initIR();
-        IRBuilder irBuilder = new IRBuilder(globalScope);
-        irBuilder.visit(ASTRoot);
-        var outFile = new FileOutputStream("ir.ll");
-        var out = new PrintStream(outFile);
-//        var out = new PrintStream(System.out);
-        var irPrinter = new IRPrinter(out, globalScope);
-        irPrinter.print();
-//        outFile.close();
+        boolean debug = System.getProperty("user.name").equals("ymy929");
+        var middleEnd = new MiddleEnd(frontEnd, debug);
 
         new InstSelection(globalScope);
+
 //        var regAlloca = new RegAlloca(globalScope);
 //        regAlloca.allocate();
 //        var asmOutFile = new FileOutputStream("asm.s");
 //        var asmOut = new PrintStream(asmOutFile);
+
         var asmOut = new PrintStream(System.out);
         var asmPrinter = new ASMPrinter(asmOut, globalScope);
         asmPrinter.print();
+
 //        asmOutFile.close();
     }
 }
