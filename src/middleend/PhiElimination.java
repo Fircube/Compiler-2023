@@ -5,7 +5,6 @@ import src.ir.Entity;
 import src.ir.Function;
 import src.ir.inst.Inst;
 import src.ir.inst.MvInst;
-import src.ir.inst.StoreInst;
 import src.utils.scope.GlobalScope;
 
 public class PhiElimination {

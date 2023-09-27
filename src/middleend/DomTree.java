@@ -15,7 +15,7 @@ public class DomTree {
 
     public void run(Function func) {
         findIDom(func);
-        collectChlidren(func);
+        collectChildren(func);
         findDF(func.entryBlock.domTreeNode);
     }
 
@@ -47,18 +47,18 @@ public class DomTree {
             for (var v : pa.bucket) {
                 var tmp = eval(v);
                 if (tmp.sDom == v.sDom) v.iDom = pa;
-                else v.samedom = tmp;
+                else v.dom = tmp;
             }
             pa.bucket.clear();
         }
         for (int i = 1; i < dfn; ++i) {
             var node = dfnOrder.get(i);
-            if (node.samedom != null)
-                node.iDom = node.samedom.iDom;
+            if (node.dom != null)
+                node.iDom = node.dom.iDom;
         }
     }
 
-    void collectChlidren(Function func) {
+    void collectChildren(Function func) {
         for (var block : func.blocks) {
             var node = block.domTreeNode;
             if (node.iDom != null) node.iDom.children.add(node);

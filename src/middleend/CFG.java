@@ -5,8 +5,6 @@ import src.ir.Function;
 import src.ir.inst.BrInst;
 import src.utils.scope.GlobalScope;
 
-import java.util.ArrayList;
-
 public class CFG {
     public GlobalScope globalScope;
 

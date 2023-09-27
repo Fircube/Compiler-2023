@@ -7,7 +7,7 @@ import java.util.ArrayList;
 public class DomTreeNode {
     public Block origin;
     public int dfn;
-    public DomTreeNode parent, sDom, samedom, iDom;
+    public DomTreeNode parent, sDom, dom, iDom;
     public ArrayList<DomTreeNode> bucket = new ArrayList<>();
     public DomTreeNode ancestor; // 记录当前未访问的最小祖先
     public DomTreeNode curMinSemi;
@@ -21,7 +21,7 @@ public class DomTreeNode {
 
     public void clear() {
         dfn = -1;
-        parent = sDom = samedom = iDom = ancestor = curMinSemi = null;
+        parent = sDom = dom = iDom = ancestor = curMinSemi = null;
         bucket.clear();
         children.clear();
         DF.clear();

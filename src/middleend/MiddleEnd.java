@@ -5,7 +5,6 @@ import src.ir.IRBuilder;
 import src.ir.IRPrinter;
 import src.utils.scope.GlobalScope;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 

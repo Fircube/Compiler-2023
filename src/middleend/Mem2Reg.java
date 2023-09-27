@@ -14,7 +14,7 @@ import java.util.*;
 
 public class Mem2Reg {
     public GlobalScope globalScope;
-    private IRBuilder irBuilder;
+    private final IRBuilder irBuilder;
 
     public Mem2Reg(GlobalScope globalScope, IRBuilder irBuilder) {
         this.globalScope = globalScope;
@@ -68,12 +68,12 @@ public class Mem2Reg {
     }
 
     void varRenaming(Block block) {
-        var popList = new ArrayList<String>();
+        var nameList = new ArrayList<String>();
         for (var phi : block.phiInsts) {
             var name = allocaName.get(phi);
             if (name == null) continue;
             updateReplace(name, phi);
-            popList.add(name);
+            nameList.add(name);
         }
 
         var iter = block.insts.iterator();
@@ -84,9 +84,9 @@ public class Mem2Reg {
                 if (((PtrType) alloca.type).baseType instanceof PtrType)
                     val = new NullConst();
                 else
-                    val = new IntConst(0,((PtrType) alloca.type).baseType.size);
+                    val = new IntConst(0, ((PtrType) alloca.type).baseType.size);
                 updateReplace(alloca.name, val);
-                popList.add(alloca.name);
+                nameList.add(alloca.name);
                 iter.remove();
             }
             if (inst instanceof StoreInst store) {
@@ -95,7 +95,7 @@ public class Mem2Reg {
                     continue;
                 var name = ptr.name;
                 updateReplace(name, store.value());
-                popList.add(name);
+                nameList.add(name);
                 iter.remove();
             }
             if (inst instanceof LoadInst load) {
@@ -121,19 +121,19 @@ public class Mem2Reg {
             varRenaming(node.origin);
         }
 
-        for (var name : popList) {
+        for (var name : nameList) {
             nameStack.get(name).pop();
         }
+    }
+
+    void updateReplace(String name, Entity replace) {
+        var stack = nameStack.computeIfAbsent(name, k -> new Stack<>());
+        stack.push(replace);
     }
 
     Entity getReplace(String name) {
         var stack = nameStack.get(name);
         if (stack == null || stack.empty()) return null;
         return nameStack.get(name).lastElement();
-    }
-
-    void updateReplace(String name, Entity replace) {
-        var stack = nameStack.computeIfAbsent(name, k -> new Stack<>());
-        stack.push(replace);
     }
 }
