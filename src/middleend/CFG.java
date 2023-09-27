@@ -5,6 +5,8 @@ import src.ir.Function;
 import src.ir.inst.BrInst;
 import src.utils.scope.GlobalScope;
 
+import java.util.ArrayList;
+
 public class CFG {
     public GlobalScope globalScope;
 
@@ -36,8 +38,12 @@ public class CFG {
             while (iter.hasNext()) {
                 var block = iter.next();
                 if (block == func.entryBlock) continue;
-                if (block.preds.isEmpty()){
+                if (block.preds.isEmpty()) {
                     iter.remove();
+                    for (var n : block.nexts) {
+                        n.preds.remove(block);
+                        if (n.preds.isEmpty()) iter = func.blocks.iterator();
+                    }
                 }
             }
         }
