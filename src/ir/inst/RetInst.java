@@ -15,7 +15,7 @@ public class RetInst extends Inst {
         addOperand(value);
     }
 
-    public Entity value(){
+    public Entity value() {
         return operands.get(0);
     }
 

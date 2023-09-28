@@ -25,5 +25,6 @@ public abstract class Inst extends Entity {
     public boolean isTerminalInst() {
         return false;
     }
+
     public abstract void accept(IRVisitor visitor);
 }

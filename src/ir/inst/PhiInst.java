@@ -9,8 +9,6 @@ import java.util.ArrayList;
 
 public class PhiInst extends Inst {
     public int idx;
-//    public ArrayList<Entity> value = new ArrayList<>();
-//    public ArrayList<Block> label = new ArrayList<>();
 
     public PhiInst(int idx, BaseType type, String name, Block belonging) {
         super(type, name, null);
@@ -26,8 +24,6 @@ public class PhiInst extends Inst {
     public void addBranch(Entity value, Block block) {
         addOperand(value);
         addOperand(block);
-//        this.value.add(value);
-//        this.label.add(block);
     }
 
     @Override

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class Function extends Const {
     public ArrayList<Block> blocks = new ArrayList<>();
     public Block entryBlock;
+    public Block exitBlock;
     public Entity retValPtr;
     public Inst exit;
     public boolean isMember;

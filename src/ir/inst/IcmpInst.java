@@ -15,11 +15,11 @@ public class IcmpInst extends Inst {
         addOperand(rhs);
     }
 
-    public Entity lhs(){
+    public Entity lhs() {
         return operands.get(0);
     }
 
-    public Entity rhs(){
+    public Entity rhs() {
         return operands.get(1);
     }
 

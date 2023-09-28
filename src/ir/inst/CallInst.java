@@ -8,7 +8,6 @@ import src.ir.type.FuncType;
 import src.ir.type.VoidType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class CallInst extends Inst {
     public CallInst(String name, Block belonging, Function func, Entity... params) {
@@ -17,7 +16,6 @@ public class CallInst extends Inst {
         for (var i : params) {
             addOperand(i);
         }
-//        paramList.addAll(Arrays.asList(params));
     }
 
     public CallInst(String name, Block belonging, Function func, ArrayList<Entity> params) {

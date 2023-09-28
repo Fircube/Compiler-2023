@@ -21,13 +21,27 @@ public class MiddleEnd {
         irBuilder.visit(frontEnd.ASTRoot);
         printFile("ir.ll");
 
-        new CFG(globalScope).run();
+        new CFG(globalScope,true).run();
+        printFile("cfg.ll");
 
         new Mem2Reg(globalScope,irBuilder).run();
         printFile("mem2reg.ll");
 
+//        new ADCE(globalScope).run();
+//        printFile("adce.ll");
+//
+//        new CFG(globalScope,true).run();
+//        printFile("cfg2.ll");
+
         new PhiElimination(globalScope).run();
         printFile("phiEli.ll");
+
+        new CFG(globalScope,true).run();
+        printFile("final.ll");
+
+//        var out = new PrintStream(System.out);
+//        var irPrinter = new IRPrinter(out, globalScope);
+//        irPrinter.print();
     }
 
     private void printFile(String filename) throws Exception {

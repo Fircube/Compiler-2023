@@ -7,20 +7,12 @@ import src.ir.type.VoidType;
 
 public class BrInst extends Inst {
     public boolean isJump;
-    //    public int phi=0;
 
     public BrInst(Block dest, Block belonging) {
         super(new VoidType(), "br", belonging);
         this.isJump = true;
         addOperand(dest);
     }
-
-//    public BrInst(int phi,Block dest, Block belonging) {
-//        super(new VoidType(), "br", belonging);
-//        this.phi= phi;
-//        this.isJump = true;
-//        this.trueDest = dest;
-//    }
 
     public BrInst(Entity con, Block trueDest, Block falseDest, Block belonging) {
         super(new VoidType(), "br", belonging);
@@ -30,17 +22,19 @@ public class BrInst extends Inst {
         addOperand(falseDest);
     }
 
-    public Block dest(){
+    public Block dest() {
         return (Block) operands.get(0);
     }
 
-    public Entity con(){
+    public Entity con() {
         return operands.get(0);
-    };
-    public Block trueDest(){
+    }
+
+    public Block trueDest() {
         return (Block) operands.get(1);
     }
-    public Block falseDest(){
+
+    public Block falseDest() {
         return (Block) operands.get(2);
     }
 

@@ -13,10 +13,11 @@ public class StoreInst extends Inst {
         addOperand(ptr);
     }
 
-    public Entity value(){
+    public Entity value() {
         return operands.get(0);
     }
-    public Entity ptr(){
+
+    public Entity ptr() {
         return operands.get(1);
     }
 

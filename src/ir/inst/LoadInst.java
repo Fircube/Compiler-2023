@@ -11,9 +11,10 @@ public class LoadInst extends Inst {
         addOperand(ptr);
     }
 
-    public Entity ptr(){
+    public Entity ptr() {
         return operands.get(0);
     }
+
     @Override
     public String toString() {
         return "%s = load %s, %s, align %d".formatted(this.name(), this.type, ptr().nameWithType(), ptr().type.size);

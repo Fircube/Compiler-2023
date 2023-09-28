@@ -1,6 +1,9 @@
 package src.middleend;
 
+import src.ir.Block;
 import src.ir.Function;
+import src.ir.inst.BrInst;
+import src.ir.inst.RetInst;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -10,24 +13,61 @@ public class DomTree {
     private int dfn;
     ArrayList<DomTreeNode> dfnOrder = new ArrayList<>();
 
+    boolean reversed;
+
+    DomTreeNode exit=new DomTreeNode(null);
+
     public DomTree() {
+        this.reversed = false;
     }
+
+    public DomTree(boolean reversed) {
+        this.reversed = reversed;
+    }
+
+    ArrayList<Block> pre(DomTreeNode node) {
+        return reversed ? node.origin.nexts : node.origin.preds;
+    }
+
+    ArrayList<Block> suc(DomTreeNode node) {
+        return reversed ? node.origin.preds : node.origin.nexts;
+    }
+
 
     public void run(Function func) {
         findIDom(func);
         collectChildren(func);
-        findDF(func.entryBlock.domTreeNode);
+        if (reversed) {
+//            for (var i = func.blocks.size() - 1; i >= 0; i--) {
+//                var block = func.blocks.get(i);
+//                if (block.insts.get(block.insts.size() - 1) instanceof RetInst) {
+//                    findDF(block.domTreeNode);
+//                }
+//            }
+            findDF(exit);
+        } else {
+            findDF(func.entryBlock.domTreeNode);
+        }
     }
 
     void findIDom(Function func) {
         clear(func);
         // find sDom
-        dfs(null, func.entryBlock.domTreeNode);
+        if (reversed) {
+            for (var i = func.blocks.size() - 1; i >= 0; i--) {
+                var block = func.blocks.get(i);
+                if (block.insts.get(block.insts.size() - 1) instanceof RetInst) {
+                    dfs(exit, block.domTreeNode);
+                }
+            }
+        } else {
+            dfs(null, func.entryBlock.domTreeNode);
+        }
         for (int i = dfn - 1; i >= 1; --i) {
             var node = dfnOrder.get(i);
             var pa = node.parent;
             var sDom = pa; // 树边半支配路径
-            for (var pred : node.origin.preds) {
+            for (var pred : pre(node)) {
                 var pre = pred.domTreeNode;
                 if (pre.dfn < 0) continue;
                 if (pre.dfn <= node.dfn && pre.dfn < sDom.dfn) { // 树边半支配路径
@@ -67,9 +107,11 @@ public class DomTree {
 
     void findDF(DomTreeNode node) {
         var tmp = new HashSet<DomTreeNode>();
-        for (var next : node.origin.nexts) {
-            var nxt = next.domTreeNode;
-            if (nxt.iDom != node) tmp.add(nxt);
+        if(node != exit){
+            for (var next : suc(node)) {
+                var nxt = next.domTreeNode;
+                if (nxt.iDom != node) tmp.add(nxt);
+            }
         }
         for (var c : node.children) {
             findDF(c);
@@ -95,7 +137,7 @@ public class DomTree {
         dfnOrder.add(node);
         node.parent = pa;
         dfn++;
-        for (var next : node.origin.nexts) {
+        for (var next : suc(node)) {
             dfs(node, next.domTreeNode);
         }
     }
