@@ -93,7 +93,7 @@ public class InstSelection implements IRVisitor {
 
         // current ra
         VirtReg curRa = new VirtReg();
-        new StoreInst(4,ra,sp,new Imm(0),curBlock);
+        new StoreInst(4, ra, sp, new Imm(0), curBlock);
         // save callee
         var callee = new ArrayList<Reg>();
         for (var reg : PhysReg.calleeSaved) {
@@ -122,7 +122,7 @@ public class InstSelection implements IRVisitor {
             i++;
         }
 //        new MvInst(ra, curRa, curBlock);
-        new LoadInst(4,ra,sp,new Imm(0),curBlock);
+        new LoadInst(4, ra, sp, new Imm(0), curBlock);
 
         new IBinaryInst("addi", sp, sp, new Imm(0, true, Imm.Type.incSp), curBlock);
         new src.asm.inst.RetInst(curBlock);

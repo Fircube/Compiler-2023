@@ -60,17 +60,11 @@ public class RegAllocator {
         build();
         makeWorklist();
         do {
-            if (!simplifyWorklist.isEmpty())
-                simplify();
-            else if (!worklistMoves.isEmpty())
-                coalesce();
-            else if (!freezeWorklist.isEmpty())
-                freeze();
-            else if (!spillWorklist.isEmpty())
-                selectSpill();
-        } while (!simplifyWorklist.isEmpty() || !worklistMoves.isEmpty() || !freezeWorklist.isEmpty()
-                || !spillWorklist.isEmpty());
-
+            if (!simplifyWorklist.isEmpty()) simplify();
+            else if (!worklistMoves.isEmpty()) coalesce();
+            else if (!freezeWorklist.isEmpty()) freeze();
+            else if (!spillWorklist.isEmpty()) selectSpill();
+        } while (!simplifyWorklist.isEmpty() || !worklistMoves.isEmpty() || !freezeWorklist.isEmpty() || !spillWorklist.isEmpty());
         assignColors();
         if (!spilledNodes.isEmpty()) {
             rewriteProgram();
@@ -250,8 +244,7 @@ public class RegAllocator {
             constrainedMoves.add(mv);
             addWorklist(u);
             addWorklist(v);
-        } else if (u instanceof PhysReg && george(u, v)
-                || !(u instanceof PhysReg) && briggs(u, v)) {
+        } else if (u instanceof PhysReg && george(u, v) || !(u instanceof PhysReg) && briggs(u, v)) {
             coalescedMoves.add(mv);
             combine(u, v);
             addWorklist(u);

@@ -25,7 +25,7 @@ public class StackAllocator {
                         l.offset = replace(l.offset);
                     } else if (i instanceof StoreInst s && s.offset.ifUsedInStack) {
                         s.offset = replace(s.offset);
-                    } else if (i instanceof IBinaryInst ib && ib.imm!=null && ib.imm.ifUsedInStack) {
+                    } else if (i instanceof IBinaryInst ib && ib.imm != null && ib.imm.ifUsedInStack) {
                         ib.imm = replace(ib.imm);
                     }
                 }
@@ -37,10 +37,10 @@ public class StackAllocator {
         int offset = switch (s.type) {
             case decSp -> -curFunc.stackCnt;
             case incSp -> curFunc.stackCnt;
-            case putArg -> s.value+1;
+            case putArg -> s.value + 1;
             case getArg -> curFunc.stackCnt + s.value;
-            case alloca -> curFunc.paramCnt + s.value+1;
-            case spill -> curFunc.paramCnt + curFunc.allocaCnt + s.value+1;
+            case alloca -> curFunc.paramCnt + s.value + 1;
+            case spill -> curFunc.paramCnt + curFunc.allocaCnt + s.value + 1;
         };
         return new Imm(offset << 2);
     }

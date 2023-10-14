@@ -10,9 +10,11 @@ import java.util.LinkedHashSet;
 public class ConflictGraph {
 
     public HashSet<Edge> adjSet = new LinkedHashSet<>();
+
     public void init() {
         adjSet.clear();
     }
+
     public void addEdge(Reg u, Reg v) {
         if (u == v) return;
         var edge1 = new Edge(u, v);
