@@ -89,6 +89,7 @@ public class InstSelection implements IRVisitor {
         curFunc.paramSpace = (paramCnt > 8 ? paramCnt - 8 : 0) << 2;
 
         curFunc.entryBlock = (ASMBlock) func.entryBlock.operand;
+        curFunc.exitBlock = (ASMBlock) func.exitBlock.operand;
         curBlock = curFunc.entryBlock;
 //        new MvInst(curFunc.cacheRa, ra, curBlock);
 
@@ -378,8 +379,8 @@ public class InstSelection implements IRVisitor {
     @Override
     public void visit(MvInst inst) {
         setRegSize(t0, inst.src());
-        loadReg(t0,inst.src());
-        storeReg(t0,inst.dest());
+        loadReg(t0, inst.src());
+        storeReg(t0, inst.dest());
     }
 
     @Override

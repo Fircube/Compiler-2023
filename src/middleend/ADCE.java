@@ -19,7 +19,7 @@ public class ADCE {
     public void run() {
         for (String key : globalScope.functions.keySet()) {
             Function func = globalScope.functions.get(key);
-            new CFG(this.globalScope,false).runFunc(func);
+            new CFG(this.globalScope,false).runOnFunc(func);
             new DomTree(true).run(func);
             markLive(func);
 

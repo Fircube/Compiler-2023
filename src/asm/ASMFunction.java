@@ -8,6 +8,7 @@ public class ASMFunction extends Operand {
     public String name;
     public ArrayList<ASMBlock> blocks = new ArrayList<>();
     public ASMBlock entryBlock;
+    public ASMBlock exitBlock;
     public int stackSpace = 0;
     public int paramSpace = 0, allocaSpace = 8;
 

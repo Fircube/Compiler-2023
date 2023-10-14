@@ -17,11 +17,11 @@ public class CFG {
     public void run() {
         for (String key : globalScope.functions.keySet()) {
             Function func = globalScope.functions.get(key);
-            runFunc(func);
+            runOnFunc(func);
         }
     }
 
-    public void runFunc(Function func){
+    public void runOnFunc(Function func){
         for (var block : func.blocks) {
             block.preds.clear();
             block.nexts.clear();

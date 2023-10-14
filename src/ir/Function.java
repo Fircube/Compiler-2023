@@ -11,7 +11,7 @@ public class Function extends Const {
     public Block entryBlock;
     public Block exitBlock;
     public Entity retValPtr;
-    public Inst exit;
+//    public Inst exit;
     public boolean isMember;
 
     public Function(FuncType type, String name, boolean isMember) {

@@ -15,7 +15,6 @@ public class DomTree {
 
     boolean reversed;
 
-    DomTreeNode exit=new DomTreeNode(null);
 
     public DomTree() {
         this.reversed = false;
@@ -44,7 +43,7 @@ public class DomTree {
 //                    findDF(block.domTreeNode);
 //                }
 //            }
-            findDF(exit);
+            findDF(func.exitBlock.domTreeNode);
         } else {
             findDF(func.entryBlock.domTreeNode);
         }
@@ -54,12 +53,13 @@ public class DomTree {
         clear(func);
         // find sDom
         if (reversed) {
-            for (var i = func.blocks.size() - 1; i >= 0; i--) {
-                var block = func.blocks.get(i);
-                if (block.insts.get(block.insts.size() - 1) instanceof RetInst) {
-                    dfs(exit, block.domTreeNode);
-                }
-            }
+//            for (var i = func.blocks.size() - 1; i >= 0; i--) {
+//                var block = func.blocks.get(i);
+//                if (block.insts.get(block.insts.size() - 1) instanceof RetInst) {
+//                    dfs(exit, block.domTreeNode);
+//                }
+//            }
+            dfs(null, func.exitBlock.domTreeNode);
         } else {
             dfs(null, func.entryBlock.domTreeNode);
         }
@@ -107,12 +107,12 @@ public class DomTree {
 
     void findDF(DomTreeNode node) {
         var tmp = new HashSet<DomTreeNode>();
-        if(node != exit){
+//        if(node != exit){
             for (var next : suc(node)) {
                 var nxt = next.domTreeNode;
                 if (nxt.iDom != node) tmp.add(nxt);
             }
-        }
+//        }
         for (var c : node.children) {
             findDF(c);
             for (var w : c.DF) {

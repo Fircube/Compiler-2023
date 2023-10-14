@@ -103,7 +103,8 @@ public class IRBuilder implements ASTVisitor {
         curFunc = new Function(funcType, funcName, false);
         globalScope.addFunction("global_var_init", curFunc);
         curBlock = curFunc.entryBlock = new Block(rename("entry"), curFunc);
-        curFunc.exit = new RetInst(null); // return void
+        curFunc.exitBlock = new Block(rename("exit"), curFunc);
+        new RetInst(curFunc.exitBlock); // return void
         for (var i : it.defs) {
             if (i instanceof VarDefNode vars) {
                 for (var j : vars.defs) {
@@ -115,7 +116,10 @@ public class IRBuilder implements ASTVisitor {
                 }
             }
         }
-        if (!curBlock.terminated) curFunc.exit.addToBlock(curBlock);
+        if (!curBlock.terminated) {
+            new BrInst(curFunc.exitBlock, curBlock);
+//            curFunc.exit.addToBlock(curBlock);
+        }
 
         curScope = globalScope;
         curBlock = null;
@@ -136,13 +140,18 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(ClassConNode it) {
         curFunc = curClsScope.functions.get(curClsName);
-        curFunc.exit = new RetInst(null);
+//        curFunc.exit = new RetInst(null);
         curBlock = curFunc.entryBlock = new Block(rename("entry"), curFunc);
+        curFunc.exitBlock = new Block(rename("exit"), curFunc);
+        new RetInst(curFunc.exitBlock);
 
         addThis();
 
         it.suite.accept(this);
-        if (!curBlock.terminated) curFunc.exit.addToBlock(curBlock);
+        if (!curBlock.terminated) {
+            new BrInst(curFunc.exitBlock, curBlock);
+//            curFunc.exit.addToBlock(curBlock);
+        }
         curScope = curScope.getParentScope();
     }
 
@@ -166,6 +175,8 @@ public class IRBuilder implements ASTVisitor {
         } else {
             curFunc = curClsScope.getFunction(curClsName);
             curBlock = curFunc.entryBlock = new Block(rename("entry"), curFunc);
+            curFunc.exitBlock = new Block(rename("exit"), curFunc);
+            new RetInst(curFunc.exitBlock);
             PtrType thisPtr = new PtrType(curClsType);
             curFunc.addParams(new Entity(thisPtr, rename("%this")));
             new RetInst(curBlock);
@@ -186,16 +197,19 @@ public class IRBuilder implements ASTVisitor {
         else curFunc = globalScope.getFunction(it.funcName);
         curScope = new FuncScope(it.returnType.type, curScope);
         curBlock = curFunc.entryBlock = new Block(rename("entry"), curFunc);
+        curFunc.exitBlock = new Block(rename("exit"), curFunc);
         if (it.funcName.equals("main")) {
             new CallInst("%main.call", curBlock, globalScope.getFunction("global_var_init"));
         }
         FuncType funcType = (FuncType) curFunc.type;
         if (funcType.retType instanceof VoidType) {
-            curFunc.exit = new RetInst(null);
+            new RetInst(curFunc.exitBlock);
+//            curFunc.exit = new RetInst(null);
         } else {
             curFunc.retValPtr = new AllocaInst(funcType.retType, rename("%retval.addr"), curFunc.entryBlock);
             curScope.addVars("retval", (AllocaInst) curFunc.retValPtr);
-            curFunc.exit = new RetInst(new LoadInst(rename("%retval"), curFunc.retValPtr, null), null);
+//            curFunc.exit = new RetInst(new LoadInst(rename("%retval"), curFunc.retValPtr, null), null);
+            new RetInst(new LoadInst(rename("%retval"), curFunc.retValPtr, curFunc.exitBlock), curFunc.exitBlock);
         }
         int idx = 0;
         if (curFunc.isMember) { // add "this" pointer
@@ -214,9 +228,10 @@ public class IRBuilder implements ASTVisitor {
 
         it.suite.accept(this);
         if (!curBlock.terminated) {
-            if (!curFunc.exit.operands.isEmpty())
-                ((LoadInst) ((RetInst) curFunc.exit).value()).addToBlock(curBlock);
-            curFunc.exit.addToBlock(curBlock);
+            new BrInst(curFunc.exitBlock,curBlock);
+//            if (!curFunc.exit.operands.isEmpty())
+//                ((LoadInst) ((RetInst) curFunc.exit).value()).addToBlock(curBlock);
+//            curFunc.exit.addToBlock(curBlock);
         }
         curScope = curScope.getParentScope();
     }
@@ -336,8 +351,10 @@ public class IRBuilder implements ASTVisitor {
         if (it.ret != null) {
             it.ret.accept(this);
             new StoreInst(getValue(it.ret), curFunc.retValPtr, curBlock);
-            new RetInst(getValue(it.ret), curBlock);
-        } else new RetInst(curBlock);
+//            new RetInst(getValue(it.ret), curBlock);
+        }
+//        else new RetInst(curBlock);
+        new BrInst(curFunc.exitBlock,curBlock);
     }
 
 
