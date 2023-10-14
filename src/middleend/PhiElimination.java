@@ -4,7 +4,7 @@ import src.ir.Block;
 import src.ir.Entity;
 import src.ir.Function;
 import src.ir.inst.Inst;
-import src.ir.inst.MvInst;
+import src.ir.inst.MoveInst;
 import src.utils.scope.GlobalScope;
 
 public class PhiElimination {
@@ -21,12 +21,12 @@ public class PhiElimination {
                 for (var phi : block.phiInsts) {
                     Entity tmp = new Entity(phi.operands.get(0).type, "%phi." + phi.idx);
                     for (int i = 0; i < phi.operands.size(); i += 2) {
-                        var move = new MvInst(tmp, phi.operands.get(i), null);
+                        var move = new MoveInst(tmp, phi.operands.get(i), null);
                         Block pred = (Block) phi.operands.get(i + 1);
                         pred.insts.add(pred.insts.size() - 1, move);
                         move.belonging = pred;
                     }
-                    Inst m = new MvInst(phi, tmp, null);
+                    Inst m = new MoveInst(phi, tmp, null);
                     block.insts.addFirst(m);
                     m.belonging = block;
                 }

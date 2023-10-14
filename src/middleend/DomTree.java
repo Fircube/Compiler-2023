@@ -2,8 +2,6 @@ package src.middleend;
 
 import src.ir.Block;
 import src.ir.Function;
-import src.ir.inst.BrInst;
-import src.ir.inst.RetInst;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,11 +23,11 @@ public class DomTree {
     }
 
     ArrayList<Block> pre(DomTreeNode node) {
-        return reversed ? node.origin.nexts : node.origin.preds;
+        return reversed ? node.origin.succ : node.origin.pred;
     }
 
     ArrayList<Block> suc(DomTreeNode node) {
-        return reversed ? node.origin.preds : node.origin.nexts;
+        return reversed ? node.origin.pred : node.origin.succ;
     }
 
 

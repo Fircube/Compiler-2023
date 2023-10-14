@@ -109,7 +109,7 @@ public class Mem2Reg {
             }
         }
 
-        for (var suc : block.nexts) {
+        for (var suc : block.succ) {
             for (var sucPhi : suc.phiInsts) {
                 var name = allocaName.get(sucPhi);
                 if (name == null) continue;

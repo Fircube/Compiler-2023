@@ -23,8 +23,8 @@ public class CFG {
 
     public void runOnFunc(Function func){
         for (var block : func.blocks) {
-            block.preds.clear();
-            block.nexts.clear();
+            block.pred.clear();
+            block.succ.clear();
         }
 
         for (var block : func.blocks) {
@@ -43,12 +43,12 @@ public class CFG {
             var iter = func.blocks.iterator();
             while (iter.hasNext()) {
                 var block = iter.next();
-                if (block.nexts.size() == 1) {
-                    Block next = block.nexts.get(0);
-                    if (next.preds.size() == 1) {
+                if (block.succ.size() == 1) {
+                    Block next = block.succ.get(0);
+                    if (next.pred.size() == 1) {
                         block.insts.removeLast();
-                        block.nexts.clear();
-                        block.nexts.addAll(next.nexts);
+                        block.succ.clear();
+                        block.succ.addAll(next.succ);
                         for (var inst : next.insts) {
                             inst.belonging = block;
                             block.insts.add(inst);
@@ -57,9 +57,9 @@ public class CFG {
                             phiInst.belonging = block;
                             block.phiInsts.add(phiInst);
                         }
-                        for (var n : next.nexts) {
-                            n.preds.remove(next);
-                            n.preds.add(block);
+                        for (var n : next.succ) {
+                            n.pred.remove(next);
+                            n.pred.add(block);
                         }
                         func.blocks.remove(next);
                         iter = func.blocks.iterator();
@@ -73,18 +73,19 @@ public class CFG {
         while (iter.hasNext()) {
             var block = iter.next();
             if (block == func.entryBlock) continue;
-            if (block.preds.isEmpty()) {
+            if (block == func.exitBlock) continue;
+            if (block.pred.isEmpty()) {
                 iter.remove();
-                for (var n : block.nexts) {
-                    n.preds.remove(block);
-                    if (n.preds.isEmpty()) iter = func.blocks.iterator();
+                for (var n : block.succ) {
+                    n.pred.remove(block);
+                    if (n.pred.isEmpty()) iter = func.blocks.iterator();
                 }
             }
         }
     }
 
     private void link(Block prev, Block next) {
-        prev.nexts.add(next);
-        next.preds.add(prev);
+        prev.succ.add(next);
+        next.pred.add(prev);
     }
 }

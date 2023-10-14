@@ -5,18 +5,15 @@ import java.util.HashSet;
 
 public class PhysReg extends Reg {
     public String name;
-    public int size = 4;
+//    public int size = 4;
     public static HashSet<PhysReg> callerSaved = new HashSet<>();
     public static HashSet<PhysReg> calleeSaved = new HashSet<>();
-    public static HashMap<String, PhysReg> regMap = new HashMap<>() {
+    public static HashMap<String, PhysReg> regs = new HashMap<>() {
         {
-            put("zero", new PhysReg("zero"));
+            // caller
             var reg = new PhysReg("ra");
             put("ra", reg);
-            callerSaved.add(reg);
-            reg = new PhysReg("sp");
-            put("sp", reg);
-            calleeSaved.add(reg);
+//            callerSaved.add(reg);
             for (int i = 0; i < 7; ++i) {
                 reg = new PhysReg("t" + i);
                 put("t" + i, reg);
@@ -27,6 +24,11 @@ public class PhysReg extends Reg {
                 put("a" + i, reg);
                 callerSaved.add(reg);
             }
+
+            put("zero", new PhysReg("zero"));
+            reg = new PhysReg("sp");
+            put("sp", reg);
+            calleeSaved.add(reg);
             for (int i = 0; i < 12; ++i) {
                 reg = new PhysReg("s" + i);
                 put("s" + i, reg);

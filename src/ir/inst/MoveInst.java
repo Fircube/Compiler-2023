@@ -4,8 +4,8 @@ import src.ir.Block;
 import src.ir.Entity;
 import src.ir.IRVisitor;
 
-public class MvInst extends Inst {
-    public MvInst(Entity dest, Entity src, Block belonging) {
+public class MoveInst extends Inst {
+    public MoveInst(Entity dest, Entity src, Block belonging) {
         super(null, null, belonging);
         addOperand(dest);
         addOperand(src);

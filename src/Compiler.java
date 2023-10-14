@@ -3,6 +3,7 @@ package src;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import src.asm.ASMPrinter;
+import src.backend.BackEnd;
 import src.backend.InstSelection;
 import src.frontend.FrontEnd;
 import src.middleend.MiddleEnd;
@@ -50,18 +51,6 @@ public class Compiler {
 
         boolean debug = System.getProperty("user.name").equals("ymy929");
         var middleEnd = new MiddleEnd(frontEnd, debug);
-
-        new InstSelection(globalScope);
-
-//        var regAlloca = new RegAlloca(globalScope);
-//        regAlloca.allocate();
-//        var asmOutFile = new FileOutputStream("asm.s");
-//        var asmOut = new PrintStream(asmOutFile);
-
-        var asmOut = new PrintStream(System.out);
-        var asmPrinter = new ASMPrinter(asmOut, globalScope);
-        asmPrinter.print();
-
-//        asmOutFile.close();
+        var backEnd = new BackEnd(middleEnd, debug);
     }
 }

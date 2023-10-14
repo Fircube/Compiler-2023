@@ -13,8 +13,8 @@ public class Block extends Entity {
 
     public boolean terminated = false;
     public DomTreeNode domTreeNode = new DomTreeNode(this);
-    public ArrayList<Block> preds = new ArrayList<>();
-    public ArrayList<Block> nexts = new ArrayList<>();
+    public ArrayList<Block> pred = new ArrayList<>();
+    public ArrayList<Block> succ = new ArrayList<>();
 
 
     public Block(String name, Function belonging) {

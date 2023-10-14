@@ -9,7 +9,7 @@ public class Entity {
     public BaseType type;
     public String name;
 
-    public Operand operand = null;
+    public Operand ASMoperand = null;
 
     public ArrayList<Entity> users = new ArrayList<>();
     public ArrayList<Entity> operands = new ArrayList<>();

@@ -2,20 +2,20 @@ package src.asm.operand;
 
 public class VirtReg extends Reg {
     public int size;
-    public int offset;
+//    public int offset;
 
-    public VirtReg(int offset) {
+    public VirtReg() {
         this.size = 4;
-        this.offset = offset;
+//        this.offset = offset;
     }
 
-    public VirtReg(int size, int offset) {
+    public VirtReg(int size) {
         this.size = size;
-        this.offset = offset;
+//        this.offset = offset;
     }
 
-    @Override
-    public String toString() {
-        return offset + "(fp)";
-    }
+//    @Override
+//    public String toString() {
+//        return offset + "(fp)";
+//    }
 }
