@@ -37,7 +37,7 @@ public class RegAllocator {
 
     final HashMap<Reg, Reg> alias = new HashMap<>();
     final HashSet<Reg> temp = new HashSet<>();
-    ConflictGraph G = new ConflictGraph();
+    ConflictGraph CG = new ConflictGraph();
     final static int K = 27;
     ASMFunction curFunc;
 
@@ -89,7 +89,7 @@ public class RegAllocator {
         worklistMoves.clear();
         activeMoves.clear();
 
-        G.init();
+        CG.init();
 
         for (var block : curFunc.blocks) {
             for (var inst : block.insts) {
@@ -143,11 +143,10 @@ public class RegAllocator {
                     worklistMoves.add(m);
                 }
 
-                live.add(PhysReg.regs.get("zero"));
                 live.addAll(inst.defs());
                 for (var def : inst.defs()) {
                     for (var l : live) {
-                        G.addEdge(l, def);
+                        CG.addEdge(l, def);
                     }
                 }
                 live.removeAll(inst.defs());
@@ -201,14 +200,17 @@ public class RegAllocator {
 
     void decrementDegree(Reg reg) {
         int d = reg.cgNode.degree;
-        reg.cgNode.degree--;
+        --reg.cgNode.degree;
         if (d == K) {
             var adj = adjacent(reg);
             adj.add(reg);
             enableMoves(adj);
             spillWorklist.remove(reg);
-            if (moveRelated(reg)) freezeWorklist.add(reg);
-            else simplifyWorklist.add(reg);
+            if (moveRelated(reg)) {
+                freezeWorklist.add(reg);
+            } else {
+                simplifyWorklist.add(reg);
+            }
         }
     }
 
@@ -240,7 +242,7 @@ public class RegAllocator {
         if (u == v) {
             coalescedMoves.add(mv);
             addWorklist(u);
-        } else if (v instanceof PhysReg || G.adjSet.contains(edge)) {
+        } else if (v instanceof PhysReg || CG.adjSet.contains(edge)) {
             constrainedMoves.add(mv);
             addWorklist(u);
             addWorklist(v);
@@ -268,16 +270,17 @@ public class RegAllocator {
     }
 
     void combine(Reg u, Reg v) {
-        if (freezeWorklist.contains(v))
+        if (freezeWorklist.contains(v)) {
             freezeWorklist.remove(v);
-        else
+        } else {
             spillWorklist.remove(v);
+        }
         coalescedNodes.add(v);
         alias.put(v, u);
         u.cgNode.moveList.addAll(v.cgNode.moveList);
         enableMoves(Set.of(v));
         for (var t : adjacent(v)) {
-            G.addEdge(t, u);
+            CG.addEdge(t, u);
             decrementDegree(t);
         }
         if (u.cgNode.degree >= K && freezeWorklist.contains(u)) {
@@ -312,8 +315,7 @@ public class RegAllocator {
         double minCost = Double.POSITIVE_INFINITY;
         for (var reg : spillWorklist) {
             double regCost = reg.cgNode.frequency / reg.cgNode.degree;
-            if (temp.contains(reg))
-                regCost += 1e10;
+            if (temp.contains(reg)) regCost += 1e10;
             if (regCost < minCost) {
                 m = reg;
                 minCost = regCost;
@@ -327,26 +329,26 @@ public class RegAllocator {
     void assignColors() {
         while (!selectStack.empty()) {
             var reg = selectStack.pop();
-            var availColors = new ArrayList<>();
+            var okColor = new ArrayList<>();
             for (int i = 0; i < 7; ++i) {
-                availColors.add(PhysReg.regs.get("t" + i));
+                okColor.add(PhysReg.regs.get("t" + i));
             }
             for (int i = 0; i < 8; ++i) {
-                availColors.add(PhysReg.regs.get("a" + i));
+                okColor.add(PhysReg.regs.get("a" + i));
             }
             for (int i = 0; i < 12; ++i) {
-                availColors.add(PhysReg.regs.get("s" + i));
+                okColor.add(PhysReg.regs.get("s" + i));
             }
-            for (var t : reg.cgNode.adjList) {
-                t = getAlias(t);
-                if (t instanceof PhysReg || coloredNodes.contains(t))
-                    availColors.remove(t.cgNode.color);
+            for (var w : reg.cgNode.adjList) {
+                w = getAlias(w);
+                if (w instanceof PhysReg || coloredNodes.contains(w))
+                    okColor.remove(w.cgNode.color);
             }
-            if (availColors.isEmpty()) {
+            if (okColor.isEmpty()) {
                 spilledNodes.add(reg);
             } else {
                 coloredNodes.add(reg);
-                reg.cgNode.color = (Reg) availColors.iterator().next();
+                reg.cgNode.color = (Reg) okColor.iterator().next();
             }
         }
 
@@ -356,7 +358,7 @@ public class RegAllocator {
     }
 
     void rewriteProgram() {
-        G.init();
+        CG.init();
         for (var node : spilledNodes) {
             node.spilledNode.init(false);
         }
@@ -379,7 +381,7 @@ public class RegAllocator {
                 lives.addAll(defs);
                 for (var def : defs) {
                     for (var live : lives) {
-                        G.addSpilledEdge(live, def);
+                        CG.addSpilledEdge(live, def);
                     }
                 }
                 lives.removeAll(defs);
@@ -459,13 +461,10 @@ public class RegAllocator {
     }
 
     boolean george(Reg u, Reg v) {
-        for (var t : adjacent(u)) {
-            if (t.cgNode.degree < K)
-                continue;
-            if (t instanceof PhysReg)
-                continue;
-            if (G.adjSet.contains(new Edge(t, v)))
-                continue;
+        for (var t : adjacent(v)) {
+            if (t.cgNode.degree < K) continue;
+            if (t instanceof PhysReg) continue;
+            if (CG.adjSet.contains(new Edge(t, u))) continue;
             return false;
         }
         return true;
@@ -474,11 +473,10 @@ public class RegAllocator {
     boolean briggs(Reg u, Reg v) {
         var adj = adjacent(u);
         adj.addAll(adjacent(v));
-        int cnt = 0;
+        int k = 0;
         for (var n : adj) {
-            if (n.cgNode.degree >= K)
-                cnt++;
+            if (n.cgNode.degree >= K) ++k;
         }
-        return cnt < K;
+        return k < K;
     }
 }

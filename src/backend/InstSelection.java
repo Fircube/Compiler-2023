@@ -32,11 +32,6 @@ public class InstSelection implements IRVisitor {
     private final PhysReg fp = PhysReg.regs.get("s0");
     private final PhysReg a0 = PhysReg.regs.get("a0");
     private final PhysReg zero = PhysReg.regs.get("zero");
-//    private final PhysReg t0 = PhysReg.regs.get("t0");
-//    private final PhysReg t1 = PhysReg.regs.get("t1");
-//    private final PhysReg t2 = PhysReg.regs.get("t2");
-//    private final PhysReg t3 = PhysReg.regs.get("t3");
-//    private final PhysReg t4 = PhysReg.regs.get("t4");
 
     public InstSelection(GlobalScope globalScope) {
         this.globalScope = globalScope;

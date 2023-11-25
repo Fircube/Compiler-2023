@@ -81,18 +81,18 @@ public class Mem2Reg {
             var inst = iter.next();
             if (inst instanceof AllocaInst alloca) {
                 Entity val;
-                if (((PtrType) alloca.type).baseType instanceof PtrType)
+                if (((PtrType) alloca.type).baseType instanceof PtrType) {
                     val = new NullConst();
-                else
+                } else {
                     val = new IntConst(0, ((PtrType) alloca.type).baseType.size);
+                }
                 updateReplace(alloca.name, val);
                 nameList.add(alloca.name);
                 iter.remove();
             }
             if (inst instanceof StoreInst store) {
                 var ptr = store.ptr();
-                if (!allocas.contains(ptr))
-                    continue;
+                if (!allocas.contains(ptr)) continue;
                 var name = ptr.name;
                 updateReplace(name, store.value());
                 nameList.add(name);
